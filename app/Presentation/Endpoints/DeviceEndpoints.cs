@@ -1,5 +1,7 @@
 ﻿using Application.DTOs.DeviceDtos;
 using Application.Interfaces;
+using FluentValidation;
+using System.ComponentModel.DataAnnotations;
 
 namespace Presentation.Endpoints;
 
@@ -27,14 +29,33 @@ public static class DeviceEndpoints
             }
         });
 
-        group.MapPost("/", async (CreateDeviceRequestDto createDeviceDto, IDeviceService deviceService) =>
+        group.MapPost("/", async (
+            CreateDeviceRequestDto createDeviceRequest, 
+            IDeviceService deviceService,
+            IValidator<CreateDeviceRequestDto> validator) =>
         {
-            await deviceService.CreateDeviceAsync(createDeviceDto);
+            var validationResult = await validator.ValidateAsync(createDeviceRequest);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+
+            await deviceService.CreateDeviceAsync(createDeviceRequest);
             return Results.Created($"/api/devices/", new {Message = "Device created successfully"});
         });
 
-        group.MapPatch("/{id:int}", async (int id, UpdateDeviceRequestDto updateDeviceDto, IDeviceService deviceService) =>
+        group.MapPatch("/{id:int}", async (
+            int id, 
+            UpdateDeviceRequestDto updateDeviceDto, 
+            IDeviceService deviceService,
+            IValidator<UpdateDeviceRequestDto> validator) =>
         {
+            var validationResult = await validator.ValidateAsync(updateDeviceDto);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+
             try
             {
                 await deviceService.UpdateDeviceAsync(id, updateDeviceDto);

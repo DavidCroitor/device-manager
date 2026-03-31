@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces;
 using Application.Services;
 using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
+using Application.Validators;
 
 namespace Application;
 
@@ -11,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IDeviceService, DeviceService>();
 
+        services.AddValidatorsFromAssemblyContaining<CreateDeviceValidator>();
         return services;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.UserDtos;
 using Application.Interfaces;
+using FluentValidation;
 
 namespace Presentation.Endpoints;
 
@@ -28,14 +29,33 @@ public static class UserEndpoints
             }
         });
 
-        group.MapPost("/", async (CreateUserRequestDto createUserDto, IUserService userService) =>
+        group.MapPost("/", async (
+            CreateUserRequestDto createUserDto, 
+            IUserService userService,
+            IValidator<CreateUserRequestDto> validator) =>
         {
+            var validationResult = await validator.ValidateAsync(createUserDto);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+
             await userService.CreateUserAsync(createUserDto);
             return Results.Created($"/api/users/", new {Message = "User created successfully"});
         });
 
-        group.MapPatch("/{id:int}", async (int id, UpdateUserRequestDto updateUserDto, IUserService userService) =>
+        group.MapPatch("/{id:int}", async (
+            int id, 
+            UpdateUserRequestDto updateUserDto, 
+            IUserService userService,
+            IValidator<UpdateUserRequestDto> validator) =>
         {
+            var validationResult = await validator.ValidateAsync(updateUserDto);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+
             try
             {
                 await userService.UpdateUserAsync(id, updateUserDto);
