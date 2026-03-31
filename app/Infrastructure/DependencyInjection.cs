@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Data.SqlClient;
+using Domain.Interfaces;
+using Infrastructure.Persistence.Repositories;
 
 namespace Infrastructure
 {
@@ -13,7 +15,7 @@ namespace Infrastructure
             var connectionString = configuration.GetConnectionString("DefaultConnection");
             try
             {
-                using var connection = new SqlConnection(connectionString);
+                using SqlConnection connection = new(connectionString);
                 connection.Open();
                 Console.WriteLine("Database connection successful!");
             }
@@ -22,6 +24,9 @@ namespace Infrastructure
                 Console.WriteLine($"Database connection failed: {ex.Message}");
             }
 
+
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IDeviceRepository, DeviceRepository>();
             return services;
         }
     }
