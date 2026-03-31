@@ -5,11 +5,11 @@ using Application.DTOs.DeviceDtos;
 
 namespace Application.Services;
 
-public class DeviceServices : IDeviceService
+public class DeviceService : IDeviceService
 {
     private readonly IDeviceRepository _deviceRepository;
 
-    public DeviceServices(IDeviceRepository deviceRepository)
+    public DeviceService(IDeviceRepository deviceRepository)
     {
         _deviceRepository = deviceRepository;
     }
@@ -32,7 +32,7 @@ public class DeviceServices : IDeviceService
     public async Task DeleteDeviceAsync(int id)
     {
         Device? existingDevice = await _deviceRepository.GetDeviceByIdAsync(id);
-        if (existingDevice != null) {
+        if (existingDevice == null) {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
         }
         await _deviceRepository.DeleteDeviceAsync(id);
@@ -83,18 +83,15 @@ public class DeviceServices : IDeviceService
         {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
         }
-        await _deviceRepository.UpdateDeviceAsync(new Device
-        {
-            Id = id,
-            Name = updateDeviceDto.Name,
-            Manufacturer = updateDeviceDto.Manufacturer,
-            Type = updateDeviceDto.Type,
-            OS = updateDeviceDto.OS,
-            OSVersion = updateDeviceDto.OSVersion,
-            Processor = updateDeviceDto.Processor,
-            RamGB = updateDeviceDto.RamGB,
-            Description = updateDeviceDto.Description
-        });
+        if (updateDeviceDto.Name != null) existingDevice.Name = updateDeviceDto.Name;
+        if (updateDeviceDto.Manufacturer != null) existingDevice.Manufacturer = updateDeviceDto.Manufacturer;
+        if (updateDeviceDto.Type != null) existingDevice.Type = updateDeviceDto.Type;
+        if (updateDeviceDto.OS != null) existingDevice.OS = updateDeviceDto.OS;
+        if (updateDeviceDto.OSVersion != null) existingDevice.OSVersion = updateDeviceDto.OSVersion;
+        if (updateDeviceDto.Processor != null) existingDevice.Processor = updateDeviceDto.Processor;
+        if (updateDeviceDto.RamGB != 0) existingDevice.RamGB = updateDeviceDto.RamGB;
+        if (updateDeviceDto.Description != null) existingDevice.Description = updateDeviceDto.Description;
+        await _deviceRepository.UpdateDeviceAsync(existingDevice);
 
     }
 }

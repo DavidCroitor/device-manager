@@ -25,10 +25,11 @@ internal class UserService : IUserService
     public async Task DeleteUserAsync(int id)
     {
         User? existingUser = await _userRepository.GetUserByIdAsync(id);
-        if (existingUser != null)
+        if (existingUser == null)
         {
-            await _userRepository.DeleteUserAsync(id);
+            throw new KeyNotFoundException($"User with ID {id} not found.");
         }
+            await _userRepository.DeleteUserAsync(id);
     }
 
     public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -62,17 +63,15 @@ internal class UserService : IUserService
     public async Task UpdateUserAsync(int id, UpdateUserRequestDto updateUserDto)
     {
         User? existingUser = await _userRepository.GetUserByIdAsync(id);
-        if (existingUser != null)
+        if (existingUser == null)
         {
             throw new KeyNotFoundException($"User with ID{id} not found");
         }
+        if (updateUserDto.Name != null) existingUser.Name = updateUserDto.Name;
+        if (updateUserDto.Role != null) existingUser.Role = updateUserDto.Role;
+        if (updateUserDto.Location != null) existingUser.Location = updateUserDto.Location;
 
-        await _userRepository.UpdateUserAsync(new User
-        {
-            Id = id,
-            Name = updateUserDto.Name,
-            Role = updateUserDto.Role,
-            Location = updateUserDto.Location
-        });
+        await _userRepository.UpdateUserAsync(existingUser);
+
     }
 }

@@ -65,6 +65,7 @@ internal class UserRepository : IUserRepository
         const string selectQuery = "SELECT Id, Name, Role, Location FROM Users WHERE Id = @Id";
         
         using SqlCommand command = new(selectQuery, connection);
+        command.Parameters.AddWithValue("@Id", id);
 
         connection.Open();
         using SqlDataReader reader = command.ExecuteReader();

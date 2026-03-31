@@ -75,6 +75,7 @@ public class DeviceRepository : IDeviceRepository
         const string selectQuery = "SELECT Id, Name, Manufacturer, Type, OS, OSVersion, Processor, RamGB, Description FROM Devices WHERE Id = @Id";
 
         using SqlCommand command = new(selectQuery, connection);
+        command.Parameters.AddWithValue("@Id", id);
 
         connection.Open();
 
@@ -125,7 +126,7 @@ public class DeviceRepository : IDeviceRepository
         OS = (string)reader["OS"],
         OSVersion = (string)reader["OSVersion"],
         Processor = (string)reader["Processor"],
-        RamGB = (string)reader["RamGB"],
+        RamGB = reader.GetInt32(reader.GetOrdinal("RamGB")),
         Description = (string)reader["Description"]
     };
 }
