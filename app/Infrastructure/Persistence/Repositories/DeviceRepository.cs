@@ -21,8 +21,8 @@ public class DeviceRepository : IDeviceRepository
         using SqlConnection connection = new(_connectionString);
 
         const string insertQuery =
-            @"INSERT INTO Devices (Name, Manufacturer, Type, OS, OSVersion, Processor, RamGB, Description)
-                VALUES (@Name, @Manufacturer, @Type, @OS, @OSVersion, @Processor, @RamGB, @Description);
+            @"INSERT INTO Devices (Name, Manufacturer, Type, OS, OSVersion, Processor, RamGB, Description, UserId)
+                VALUES (@Name, @Manufacturer, @Type, @OS, @OSVersion, @Processor, @RamGB, @Description, @UserId);
                 SELECT CAST(SCOPE_IDENTITY() as int);";
 
         using SqlCommand command = new SqlCommand(insertQuery, connection);
@@ -34,6 +34,7 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
         command.Parameters.AddWithValue("@Description", device.Description);
+        command.Parameters.AddWithValue("@UserId", device.UserId.HasValue ? device.UserId : DBNull.Value);
 
         connection.Open();
         await command.ExecuteNonQueryAsync();
@@ -55,7 +56,15 @@ public class DeviceRepository : IDeviceRepository
         using SqlConnection connection = new(_connectionString);
         List<Device> devices = [];
 
-        const string selectQuery = "SELECT Id, Name, Manufacturer, Type, OS, OSVersion, Processor, RamGB, Description FROM Devices";
+        const string selectQuery =
+            @"SELECT 
+                d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                u.Id AS UserId, 
+                u.Name AS UserName, 
+                u.Role, 
+                u.Location
+            FROM Devices d
+            LEFT JOIN Users u ON d.UserId = u.Id";
         using SqlCommand command = new(selectQuery, connection);
         
         connection.Open();
@@ -72,7 +81,16 @@ public class DeviceRepository : IDeviceRepository
     public async Task<Device?> GetDeviceByIdAsync(int id)
     {
         using SqlConnection connection = new(_connectionString);
-        const string selectQuery = "SELECT Id, Name, Manufacturer, Type, OS, OSVersion, Processor, RamGB, Description FROM Devices WHERE Id = @Id";
+        const string selectQuery =
+            @"SELECT 
+                d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                u.Id AS UserId, 
+                u.Name AS UserName, 
+                u.Role, 
+                u.Location
+            FROM Devices d
+            LEFT JOIN Users u ON d.UserId = u.Id
+            WHERE d.Id = @Id";
 
         using SqlCommand command = new(selectQuery, connection);
         command.Parameters.AddWithValue("@Id", id);
@@ -99,7 +117,8 @@ public class DeviceRepository : IDeviceRepository
                 OSVersion = @OSVersion, 
                 Processor = @Processor, 
                 RamGB = @RamGB, 
-                Description = @Description
+                Description = @Description,
+                UserId = @UserId
             WHERE Id = @Id";
     
         using SqlCommand command = new(updateQuery, connection);
@@ -112,21 +131,38 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
         command.Parameters.AddWithValue("@Description", device.Description);
-        
+        command.Parameters.AddWithValue("@UserId", device.UserId.HasValue ? device.UserId : DBNull.Value);
+
         connection.Open();
         await command.ExecuteNonQueryAsync();
     }
 
-    private Device MapToDevice(SqlDataReader reader) => new()
+    private Device MapToDevice(SqlDataReader reader) 
     {
-        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-        Name = (string)reader["Name"],
-        Manufacturer = (string)reader["Manufacturer"],
-        Type = (string)reader["Type"],
-        OS = (string)reader["OS"],
-        OSVersion = (string)reader["OSVersion"],
-        Processor = (string)reader["Processor"],
-        RamGB = reader.GetInt32(reader.GetOrdinal("RamGB")),
-        Description = (string)reader["Description"]
-    };
+        var device = new Device
+        {
+            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+            Name = (string)reader["Name"],
+            Manufacturer = (string)reader["Manufacturer"],
+            Type = (string)reader["Type"],
+            OS = (string)reader["OS"],
+            OSVersion = (string)reader["OSVersion"],
+            Processor = (string)reader["Processor"],
+            RamGB = reader.GetInt32(reader.GetOrdinal("RamGB")),
+            Description = (string)reader["Description"],
+            UserId = reader["UserId"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("UserId")) : null
+        };
+        if(reader["UserName"] != DBNull.Value)
+        {
+            device.User = new User
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("UserId")),
+                Name = (string)reader["UserName"],
+                Role = (string)reader["Role"],
+                Location = (string)reader["Location"]
+            };
+        }
+
+        return device;
+    }
 }

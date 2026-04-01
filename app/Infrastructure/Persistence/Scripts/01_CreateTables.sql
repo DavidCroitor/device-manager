@@ -25,7 +25,9 @@ BEGIN
         OSVersion NVARCHAR(50) NOT NULL,
         Processor NVARCHAR(100) NOT NULL,
         RamGB INT NOT NULL,
-        Description NVARCHAR(MAX) NULL
+        Description NVARCHAR(MAX) NULL,
+
+        UserId INT NULL FOREIGN KEY REFERENCES Users(Id)
     );
 END
 GO

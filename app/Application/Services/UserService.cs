@@ -67,11 +67,15 @@ internal class UserService : IUserService
         {
             throw new KeyNotFoundException($"User with ID{id} not found");
         }
-        if (updateUserDto.Name != null) existingUser.Name = updateUserDto.Name;
-        if (updateUserDto.Role != null) existingUser.Role = updateUserDto.Role;
-        if (updateUserDto.Location != null) existingUser.Location = updateUserDto.Location;
+        var userToUpdate = new User
+        {
+            Id = existingUser.Id,
+            Name = updateUserDto.Name ?? existingUser.Name,
+            Role = updateUserDto.Role ?? existingUser.Role,
+            Location = updateUserDto.Location ?? existingUser.Location
+        };
 
-        await _userRepository.UpdateUserAsync(existingUser);
+        await _userRepository.UpdateUserAsync(userToUpdate);
 
     }
 }

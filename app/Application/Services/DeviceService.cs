@@ -8,14 +8,23 @@ namespace Application.Services;
 public class DeviceService : IDeviceService
 {
     private readonly IDeviceRepository _deviceRepository;
-
-    public DeviceService(IDeviceRepository deviceRepository)
+    private readonly IUserRepository _userRepository;
+    public DeviceService(IDeviceRepository deviceRepository, IUserRepository userRepository)
     {
         _deviceRepository = deviceRepository;
+        _userRepository = userRepository;
     }
 
     public async Task CreateDeviceAsync(CreateDeviceRequestDto createDeviceDto)
     {
+        if (createDeviceDto.UserId.HasValue)
+        {
+            var user = await _userRepository.GetUserByIdAsync(createDeviceDto.UserId.Value);
+            if (user == null)
+            {
+                throw new ArgumentException($"Assignment failed: User with ID {createDeviceDto.UserId} does not exist.");
+            }
+        }
         await _deviceRepository.AddDeviceAsync(new Device
         {
             Name = createDeviceDto.Name,
@@ -25,7 +34,8 @@ public class DeviceService : IDeviceService
             OSVersion = createDeviceDto.OSVersion,
             Processor = createDeviceDto.Processor,
             RamGB = createDeviceDto.RamGB,
-            Description = createDeviceDto.Description
+            Description = createDeviceDto.Description,
+            UserId = createDeviceDto.UserId
         });
     }
 
@@ -51,7 +61,10 @@ public class DeviceService : IDeviceService
             OSVersion = d.OSVersion,
             Processor = d.Processor,
             RamGB = d.RamGB,
-            Description = d.Description
+            Description = d.Description,
+            UserName =  d.User?.Name ?? "Unassigned",
+            UserRole = d.User?.Role ?? "N/A",
+            UserLocation = d.User?.Location ?? "Storage"
         }).ToList();
     }
 
@@ -72,10 +85,12 @@ public class DeviceService : IDeviceService
             OSVersion = device.OSVersion,
             Processor = device.Processor,
             RamGB = device.RamGB,
-            Description = device.Description
+            Description = device.Description,
+            UserName = device.User?.Name ?? "Unassigned",
+            UserRole = device.User?.Role ?? "N/A",
+            UserLocation = device.User?.Location ?? "Storage"
         };
     }
-
     public async Task UpdateDeviceAsync(int id, UpdateDeviceRequestDto updateDeviceDto)
     {
         Device? existingDevice = await _deviceRepository.GetDeviceByIdAsync(id);
@@ -83,15 +98,29 @@ public class DeviceService : IDeviceService
         {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
         }
-        if (updateDeviceDto.Name != null) existingDevice.Name = updateDeviceDto.Name;
-        if (updateDeviceDto.Manufacturer != null) existingDevice.Manufacturer = updateDeviceDto.Manufacturer;
-        if (updateDeviceDto.Type != null) existingDevice.Type = updateDeviceDto.Type;
-        if (updateDeviceDto.OS != null) existingDevice.OS = updateDeviceDto.OS;
-        if (updateDeviceDto.OSVersion != null) existingDevice.OSVersion = updateDeviceDto.OSVersion;
-        if (updateDeviceDto.Processor != null) existingDevice.Processor = updateDeviceDto.Processor;
-        if (updateDeviceDto.RamGB != 0) existingDevice.RamGB = updateDeviceDto.RamGB;
-        if (updateDeviceDto.Description != null) existingDevice.Description = updateDeviceDto.Description;
-        await _deviceRepository.UpdateDeviceAsync(existingDevice);
+
+        if (updateDeviceDto.UserId.HasValue)
+        {
+            var user = await _userRepository.GetUserByIdAsync(updateDeviceDto.UserId.Value);
+            if (user == null)
+            {
+                throw new ArgumentException($"Assignment failed: User with ID {updateDeviceDto.UserId} does not exist.");
+            }
+        }
+        var deviceToUpdate = new Device
+        {
+            Id = id,
+            Name = updateDeviceDto.Name ?? existingDevice.Name,
+            Manufacturer = updateDeviceDto.Manufacturer ?? existingDevice.Manufacturer,
+            Type = updateDeviceDto.Type ?? existingDevice.Type,
+            OS = updateDeviceDto.OS ?? existingDevice.OS,
+            OSVersion = updateDeviceDto.OSVersion ?? existingDevice.OSVersion,
+            Processor = updateDeviceDto.Processor ?? existingDevice.Processor,
+            RamGB = updateDeviceDto.RamGB != 0 ? updateDeviceDto.RamGB : existingDevice.RamGB,
+            Description = updateDeviceDto.Description ?? existingDevice.Description,
+            UserId = updateDeviceDto.UserId ?? existingDevice.UserId
+        };
+        await _deviceRepository.UpdateDeviceAsync(deviceToUpdate);
 
     }
 }

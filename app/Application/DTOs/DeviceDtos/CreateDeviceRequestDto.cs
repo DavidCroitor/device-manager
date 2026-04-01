@@ -14,4 +14,5 @@ public class CreateDeviceRequestDto
     public string Processor { get; set; }
     public int RamGB { get; set; }
     public string Description { get; set; }
+    public int? UserId { get; set; }
 }

@@ -3,27 +3,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Data.SqlClient;
 using Domain.Interfaces;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Persistence;
 
 namespace Infrastructure
 {
     public static class DependencyInjection
     {
         public static IServiceCollection AddInfrastructure(
-            this IServiceCollection services, 
-            IConfiguration configuration)
+            this IServiceCollection services)
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-            try
-            {
-                using SqlConnection connection = new(connectionString);
-                connection.Open();
-                Console.WriteLine("Database connection successful!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Database connection failed: {ex.Message}");
-            }
-
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IDeviceRepository, DeviceRepository>();
