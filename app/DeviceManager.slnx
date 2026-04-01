@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Application/Application.csproj" />
+  <Project Path="DeviceManager.IntegrationTests/DeviceManager.IntegrationTests.csproj" Id="0f4646f8-5a5f-4cfe-a4ae-65f075ab4707" />
   <Project Path="Domain/Domain.csproj" />
   <Project Path="Infrastructure/Infrastructure.csproj" />
   <Project Path="Presentation/Presentation.csproj" />

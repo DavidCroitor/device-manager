@@ -41,7 +41,7 @@ public static class UserEndpoints
             }
 
             await userService.CreateUserAsync(createUserDto);
-            return Results.Created($"/api/users/", new {Message = "User created successfully"});
+            return Results.Created($"/api/users/", new {message = "User created successfully"});
         });
 
         group.MapPatch("/{id:int}", async (
@@ -59,7 +59,7 @@ public static class UserEndpoints
             try
             {
                 await userService.UpdateUserAsync(id, updateUserDto);
-                return Results.Ok(new {Message = "User updated successfully"});
+                return Results.Ok(new {message = "User updated successfully"});
             }
             catch (KeyNotFoundException ex)
             {
@@ -72,7 +72,7 @@ public static class UserEndpoints
             try
             {
                 await userService.DeleteUserAsync(id);
-                return Results.Ok(new {Message = "User deleted successfully"});
+                return Results.Ok(new {message = "User deleted successfully"});
             }
             catch (KeyNotFoundException ex)
             {

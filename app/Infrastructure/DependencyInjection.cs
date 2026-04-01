@@ -10,11 +10,12 @@ namespace Infrastructure
     public static class DependencyInjection
     {
         public static IServiceCollection AddInfrastructure(
-            this IServiceCollection services)
+            this IServiceCollection services,
+            string connectionString)
         {
 
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IDeviceRepository, DeviceRepository>();
+            services.AddScoped<IUserRepository>(sp => new UserRepository(connectionString));
+            services.AddScoped<IDeviceRepository>(sp => new DeviceRepository(connectionString));
             return services;
         }
     }

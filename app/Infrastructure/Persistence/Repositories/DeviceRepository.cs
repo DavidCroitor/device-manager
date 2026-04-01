@@ -11,9 +11,9 @@ namespace Infrastructure.Persistence.Repositories;
 public class DeviceRepository : IDeviceRepository
 {
     private readonly string _connectionString;
-    public DeviceRepository(IConfiguration configuration)
+    public DeviceRepository(string connectionString)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        _connectionString = connectionString;
     }
 
     public async Task AddDeviceAsync(Device device)

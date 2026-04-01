@@ -1,7 +1,3 @@
-USE DeviceManagement;
-GO
-
-
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users')
 BEGIN
     CREATE TABLE Users (
@@ -27,7 +23,7 @@ BEGIN
         RamGB INT NOT NULL,
         Description NVARCHAR(MAX) NULL,
 
-        UserId INT NULL FOREIGN KEY REFERENCES Users(Id)
+        UserId INT NULL FOREIGN KEY REFERENCES Users(Id) ON DELETE SET NULL
     );
 END
 GO

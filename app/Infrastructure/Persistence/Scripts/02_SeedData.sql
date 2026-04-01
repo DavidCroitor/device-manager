@@ -1,7 +1,3 @@
-USE DeviceManagement;
-GO
-
--- 1. POPULATE USERS (8 Users)
 MERGE INTO Users AS target
 USING (VALUES
     ('Sara', 'Administrator', 'Cluj Napoca'),

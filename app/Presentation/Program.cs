@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddApplication();
 
 DatabaseInitializer.Initialize(connectionString);
@@ -31,3 +31,4 @@ app.MapUserEndpoints();
 app.Run();
 
 
+public partial class Program { }

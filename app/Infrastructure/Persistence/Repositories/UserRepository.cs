@@ -8,9 +8,9 @@ namespace Infrastructure.Persistence.Repositories;
 internal class UserRepository : IUserRepository
 {
     private readonly string _connectionString;
-    public UserRepository(IConfiguration configuration)
+    public UserRepository(string connectionString)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        _connectionString = connectionString;
     }
     public async Task AddUserAsync(User user)
     {

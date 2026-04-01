@@ -18,7 +18,7 @@ public class CreateDeviceValidator : AbstractValidator<CreateDeviceRequestDto>
 
         RuleFor(x => x.Type)
             .NotEmpty().WithMessage("Device type is required.")
-            .Must(type => type.ToLower() == "phone" || type.ToLower() == "tablet").WithMessage("Type must be 'phone' or 'tablet'.");
+            .Must(type => type?.ToLower() == "phone" || type?.ToLower() == "tablet").WithMessage("Type must be 'phone' or 'tablet'.");
 
         RuleFor(x => x.OS)
             .NotEmpty().WithMessage("OS is required.")
