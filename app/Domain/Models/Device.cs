@@ -3,8 +3,8 @@ namespace Domain.Models;
 public class Device
 {
     public int Id { get; set;}
-    public int? UserId { get; set; }
-    public User? User { get; set; }
+    public int UserId { get; set; }
+    public User User { get; set; }
     public string Name { get; set; }
     public string Manufacturer { get; set; }
     public string Type { get; set; }

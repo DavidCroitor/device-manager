@@ -27,6 +27,10 @@ public static class DeviceEndpoints
             {
                 return Results.NotFound(new { ex.Message });
             }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { ex.Message });
+            }
         });
 
         group.MapPost("/", async (
@@ -39,9 +43,19 @@ public static class DeviceEndpoints
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
-
-            await deviceService.CreateDeviceAsync(createDeviceRequest);
-            return Results.Created($"/api/devices/", new {Message = "Device created successfully"});
+            try
+            {
+                await deviceService.CreateDeviceAsync(createDeviceRequest);
+                return Results.Created($"/api/devices/", new {Message = "Device created successfully"});
+            }
+            catch(InvalidOperationException ex)
+            {
+                return Results.Conflict(ex.Message);
+            }
+            catch(ArgumentException ex)
+            {
+                return Results.BadRequest(new { ex.Message });
+            }
         });
 
         group.MapPatch("/{id:int}", async (
@@ -64,6 +78,10 @@ public static class DeviceEndpoints
             catch (KeyNotFoundException ex)
             {
                 return Results.NotFound(new { ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { ex.Message });
             }
         });
 

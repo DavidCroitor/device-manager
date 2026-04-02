@@ -9,4 +9,5 @@ public interface IDeviceRepository
     Task AddDeviceAsync(Device device);
     Task UpdateDeviceAsync(Device device);
     Task DeleteDeviceAsync(int id);
+    Task<bool> DeviceExistsAsync(string name, string manufacturer, int userId);
 }

@@ -22,8 +22,7 @@ public class DeviceRepository : IDeviceRepository
 
         const string insertQuery =
             @"INSERT INTO Devices (Name, Manufacturer, Type, OS, OSVersion, Processor, RamGB, Description, UserId)
-                VALUES (@Name, @Manufacturer, @Type, @OS, @OSVersion, @Processor, @RamGB, @Description, @UserId);
-                SELECT CAST(SCOPE_IDENTITY() as int);";
+                VALUES (@Name, @Manufacturer, @Type, @OS, @OSVersion, @Processor, @RamGB, @Description, @UserId)";
 
         using SqlCommand command = new SqlCommand(insertQuery, connection);
         command.Parameters.AddWithValue("@Name", device.Name);
@@ -34,7 +33,7 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
         command.Parameters.AddWithValue("@Description", device.Description);
-        command.Parameters.AddWithValue("@UserId", device.UserId.HasValue ? device.UserId : DBNull.Value);
+        command.Parameters.AddWithValue("@UserId", device.UserId);
 
         connection.Open();
         await command.ExecuteNonQueryAsync();
@@ -47,8 +46,25 @@ public class DeviceRepository : IDeviceRepository
         const string deleteQuery = "DELETE FROM Devices WHERE Id = @Id";
         using SqlCommand command = new(deleteQuery, connection);
         command.Parameters.AddWithValue("@Id", id);
-        connection.Open();
+        await connection.OpenAsync();
         await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<bool> DeviceExistsAsync(string name, string manufacturer, int userId)
+    {
+        using SqlConnection connection = new(_connectionString);
+        const string existsQuery = "SELECT 1 FROM Devices WHERE Name = @Name AND Manufacturer = @Manufacturer AND UserId = @UserId";
+        
+        using SqlCommand command = new(existsQuery, connection);
+        command.Parameters.AddWithValue("@Name", name);
+        command.Parameters.AddWithValue("@Manufacturer", manufacturer);
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        await connection.OpenAsync();
+
+        var result = await command.ExecuteScalarAsync();
+        return result != null;
+
     }
 
     public async Task<IEnumerable<Device>> GetAllDevicesAsync()
@@ -67,7 +83,7 @@ public class DeviceRepository : IDeviceRepository
             LEFT JOIN Users u ON d.UserId = u.Id";
         using SqlCommand command = new(selectQuery, connection);
         
-        connection.Open();
+        await connection.OpenAsync();
 
         using SqlDataReader reader = command.ExecuteReader();
         while (await reader.ReadAsync())
@@ -95,7 +111,7 @@ public class DeviceRepository : IDeviceRepository
         using SqlCommand command = new(selectQuery, connection);
         command.Parameters.AddWithValue("@Id", id);
 
-        connection.Open();
+        await connection.OpenAsync();
 
         using SqlDataReader reader = command.ExecuteReader();
         if(await reader.ReadAsync())
@@ -131,9 +147,9 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
         command.Parameters.AddWithValue("@Description", device.Description);
-        command.Parameters.AddWithValue("@UserId", device.UserId.HasValue ? device.UserId : DBNull.Value);
+        command.Parameters.AddWithValue("@UserId", device.UserId);
 
-        connection.Open();
+        await connection.OpenAsync();
         await command.ExecuteNonQueryAsync();
     }
 
@@ -150,10 +166,8 @@ public class DeviceRepository : IDeviceRepository
             Processor = (string)reader["Processor"],
             RamGB = reader.GetInt32(reader.GetOrdinal("RamGB")),
             Description = (string)reader["Description"],
-            UserId = reader["UserId"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("UserId")) : null
+            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
         };
-        if(reader["UserName"] != DBNull.Value)
-        {
             device.User = new User
             {
                 Id = reader.GetInt32(reader.GetOrdinal("UserId")),
@@ -161,7 +175,6 @@ public class DeviceRepository : IDeviceRepository
                 Role = (string)reader["Role"],
                 Location = (string)reader["Location"]
             };
-        }
 
         return device;
     }

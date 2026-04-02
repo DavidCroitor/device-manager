@@ -25,7 +25,7 @@ internal class UserRepository : IUserRepository
         insertCommand.Parameters.AddWithValue("@Role", user.Role);
         insertCommand.Parameters.AddWithValue("@Location", user.Location);
 
-        connection.Open();
+        await connection.OpenAsync();
         await insertCommand.ExecuteNonQueryAsync();
     }
 
@@ -37,7 +37,7 @@ internal class UserRepository : IUserRepository
         using SqlCommand command = new(deleteQuery, connection);
         command.Parameters.AddWithValue("@Id", id);
 
-        connection.Open();
+        await connection.OpenAsync();
         await command.ExecuteNonQueryAsync();
     }
 
@@ -49,7 +49,7 @@ internal class UserRepository : IUserRepository
         const string selectQuery = "SELECT Id, Name, Role, Location FROM Users";
         using SqlCommand command = new(selectQuery, connection);
 
-        connection.Open();
+        await connection.OpenAsync();
         using SqlDataReader reader = command.ExecuteReader();
 
         while (await reader.ReadAsync())
@@ -67,7 +67,7 @@ internal class UserRepository : IUserRepository
         using SqlCommand command = new(selectQuery, connection);
         command.Parameters.AddWithValue("@Id", id);
 
-        connection.Open();
+        await connection.OpenAsync();
         using SqlDataReader reader = command.ExecuteReader();
         if(await reader.ReadAsync())
         {
@@ -93,7 +93,7 @@ internal class UserRepository : IUserRepository
         command.Parameters.AddWithValue("@Role", user.Role);
         command.Parameters.AddWithValue("@Location", user.Location);
 
-        connection.Open();
+        await connection.OpenAsync();
         await command.ExecuteNonQueryAsync();
 
     }
