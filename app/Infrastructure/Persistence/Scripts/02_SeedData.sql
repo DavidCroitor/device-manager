@@ -3,10 +3,10 @@ USING (VALUES
     ('Sara', 'Administrator', 'Cluj Napoca'),
     ('David', 'Standard User', 'Suceava'),
     ('Mihai', 'Technician', 'Bucharest'),
-    ('Elena', 'QA Engineer', 'Timișoara'),
-    ('Andrei', 'Backend Developer', 'Iași'),
+    ('Elena', 'QA Engineer', 'Timisoara'),
+    ('Andrei', 'Backend Developer', 'Iasi'),
     ('Cristina', 'Project Manager', 'Cluj Napoca'),
-    ('Radu', 'Sales Executive', 'Brașov'),
+    ('Radu', 'Sales Executive', 'Brasov'),
     ('Ioana', 'UI/UX Designer', 'Remote')
 ) AS source (Name, Role, Location)
 ON target.Name = source.Name
