@@ -1,24 +1,32 @@
-﻿using Domain.Models;
-using Domain.Interfaces;
+﻿using Application.DTOs.UserDtos;
 using Application.Interfaces;
-using Application.DTOs.UserDtos;
+using Domain.Interfaces;
+using Domain.Models;
+
 
 namespace Application.Services;
 
 internal class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    public UserService(IUserRepository userRepository)
+    private readonly ITokenGenerator _tokenGenerator;
+    private readonly IPasswordHasher _passwordHasher;
+    public UserService(IUserRepository userRepository, ITokenGenerator tokenGenerator, IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
+        _tokenGenerator = tokenGenerator;
+        _passwordHasher = passwordHasher;
     }
     public async Task CreateUserAsync(CreateUserRequestDto createUserDto)
     {
+        string passwordHash = _passwordHasher.HashPassword(createUserDto.Password);
         await _userRepository.AddUserAsync(new User
         {
             Name = createUserDto.Name,
+            Email = createUserDto.Email,
             Role = createUserDto.Role,
-            Location = createUserDto.Location
+            Location = createUserDto.Location,
+            PasswordHash = passwordHash
         });
     }
 
@@ -76,6 +84,16 @@ internal class UserService : IUserService
         };
 
         await _userRepository.UpdateUserAsync(userToUpdate);
+    }
 
+    public async Task<string> LoginAsync(LoginRequestDto loginRequest)
+    {
+        var user = await _userRepository.GetUserByEmailAsync(loginRequest.Email);
+        if(user == null || !_passwordHasher.VerifyPassword(loginRequest.Password, user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+
+        return _tokenGenerator.GenerateToken(user);
     }
 }

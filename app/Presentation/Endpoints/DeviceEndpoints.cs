@@ -1,5 +1,7 @@
 ﻿using Application.DTOs.DeviceDtos;
+using Application.DTOs.UserDtos;
 using Application.Interfaces;
+using Application.Validators;
 using FluentValidation;
 using System.ComponentModel.DataAnnotations;
 
@@ -10,11 +12,37 @@ public static class DeviceEndpoints
     public static void MapDeviceEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/devices").WithTags("Devices");
+
+        group.MapPost("", async (
+            CreateDeviceRequestDto createDeviceRequest,
+            IDeviceService deviceService,
+            IValidator<CreateDeviceRequestDto> validator) =>
+        {
+            var validationResult = await validator.ValidateAsync(createDeviceRequest);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+            try
+            {
+                await deviceService.CreateDeviceAsync(createDeviceRequest);
+                return Results.Created($"/api/devices/", new { Message = "Device created successfully" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { ex.Message });
+            }
+        }).RequireAuthorization();
+
         group.MapGet("/", async (IDeviceService deviceService) =>
         {
             var devices = await deviceService.GetAllDevicesAsync();
             return Results.Ok(devices);
-        });
+        }).RequireAuthorization();
 
         group.MapGet("/{id:int}", async (int id, IDeviceService deviceService) =>
         {
@@ -31,36 +59,11 @@ public static class DeviceEndpoints
             {
                 return Results.BadRequest(new { ex.Message });
             }
-        });
-
-        group.MapPost("/", async (
-            CreateDeviceRequestDto createDeviceRequest, 
-            IDeviceService deviceService,
-            IValidator<CreateDeviceRequestDto> validator) =>
-        {
-            var validationResult = await validator.ValidateAsync(createDeviceRequest);
-            if (!validationResult.IsValid)
-            {
-                return Results.ValidationProblem(validationResult.ToDictionary());
-            }
-            try
-            {
-                await deviceService.CreateDeviceAsync(createDeviceRequest);
-                return Results.Created($"/api/devices/", new {Message = "Device created successfully"});
-            }
-            catch(InvalidOperationException ex)
-            {
-                return Results.Conflict(ex.Message);
-            }
-            catch(ArgumentException ex)
-            {
-                return Results.BadRequest(new { ex.Message });
-            }
-        });
+        }).RequireAuthorization();
 
         group.MapPatch("/{id:int}", async (
-            int id, 
-            UpdateDeviceRequestDto updateDeviceDto, 
+            int id,
+            UpdateDeviceRequestDto updateDeviceDto,
             IDeviceService deviceService,
             IValidator<UpdateDeviceRequestDto> validator) =>
         {
@@ -73,7 +76,7 @@ public static class DeviceEndpoints
             try
             {
                 await deviceService.UpdateDeviceAsync(id, updateDeviceDto);
-                return Results.Ok(new {Message = "Device updated successfully"});
+                return Results.Ok(new { Message = "Device updated successfully" });
             }
             catch (KeyNotFoundException ex)
             {
@@ -83,19 +86,19 @@ public static class DeviceEndpoints
             {
                 return Results.BadRequest(new { ex.Message });
             }
-        });
+        }).RequireAuthorization();
 
         group.MapDelete("/{id:int}", async (int id, IDeviceService deviceService) =>
         {
             try
             {
                 await deviceService.DeleteDeviceAsync(id);
-                return Results.Ok(new {Message = "Device deleted successfully"});
+                return Results.Ok(new { Message = "Device deleted successfully" });
             }
             catch (KeyNotFoundException ex)
             {
                 return Results.NotFound(new { ex.Message });
             }
-        });
+        }).RequireAuthorization();
     }
 }

@@ -10,11 +10,48 @@ public static class UserEndpoints
     {
         var group = app.MapGroup("/api/users").WithTags("Users");
 
+        group.MapPost("/register", async (
+            CreateUserRequestDto createUserDto,
+            IUserService userService,
+            IValidator<CreateUserRequestDto> validator) =>
+        {
+            var validationResult = await validator.ValidateAsync(createUserDto);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+
+            await userService.CreateUserAsync(createUserDto);
+            return Results.Created($"/api/users/", new { message = "User created successfully" });
+        }).AllowAnonymous();
+
+        group.MapPost("/login", async(
+            LoginRequestDto loginRequest,
+            IUserService userService,
+            IValidator<LoginRequestDto> validator) =>
+        {
+            var validationResult = await validator.ValidateAsync(loginRequest);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+            try
+            {
+                string token = await userService.LoginAsync(loginRequest);
+                return Results.Ok(new { Token = token });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.Unauthorized();
+            }
+
+        }).AllowAnonymous();
+
         group.MapGet("/", async (IUserService userService) =>
         {
             var users = await userService.GetAllUsersAsync();
             return Results.Ok(users);
-        });
+        }).RequireAuthorization();
 
         group.MapGet("/{id:int}", async (int id, IUserService userService) =>
         {
@@ -27,22 +64,7 @@ public static class UserEndpoints
             {
                 return Results.NotFound(new { ex.Message });
             }
-        });
-
-        group.MapPost("/", async (
-            CreateUserRequestDto createUserDto, 
-            IUserService userService,
-            IValidator<CreateUserRequestDto> validator) =>
-        {
-            var validationResult = await validator.ValidateAsync(createUserDto);
-            if (!validationResult.IsValid)
-            {
-                return Results.ValidationProblem(validationResult.ToDictionary());
-            }
-
-            await userService.CreateUserAsync(createUserDto);
-            return Results.Created($"/api/users/", new {message = "User created successfully"});
-        });
+        }).RequireAuthorization();
 
         group.MapPatch("/{id:int}", async (
             int id, 
@@ -65,7 +87,7 @@ public static class UserEndpoints
             {
                 return Results.NotFound(new { ex.Message });
             }
-        });
+        }).RequireAuthorization();
 
         group.MapDelete("/{id:int}", async (int id, IUserService userService) =>
         {
@@ -78,6 +100,6 @@ public static class UserEndpoints
             {
                 return Results.NotFound(new { ex.Message });
             }
-        });
+        }).RequireAuthorization();
     }
 }

@@ -1,18 +1,18 @@
 MERGE INTO Users AS target
 USING (VALUES
-    ('Sara', 'Administrator', 'Cluj Napoca'),
-    ('David', 'Standard User', 'Suceava'),
-    ('Mihai', 'Technician', 'Bucharest'),
-    ('Elena', 'QA Engineer', 'Timisoara'),
-    ('Andrei', 'Backend Developer', 'Iasi'),
-    ('Cristina', 'Project Manager', 'Cluj Napoca'),
-    ('Radu', 'Sales Executive', 'Brasov'),
-    ('Ioana', 'UI/UX Designer', 'Remote')
-) AS source (Name, Role, Location)
-ON target.Name = source.Name
+    ('sara@example.com', 'Sara', 'Administrator', 'Cluj Napoca', 'hash'),
+    ('david@example.com', 'David', 'Standard User', 'Suceava', 'hash'),
+    ('mihai@example.com', 'Mihai', 'Technician', 'Bucharest', 'hash'),
+    ('elena@example.com', 'Elena', 'QA Engineer', 'Timisoara', 'hash'),
+    ('andrei@example.com', 'Andrei', 'Backend Developer', 'Iasi', 'hash'),
+    ('cristina@example.com', 'Cristina', 'Project Manager', 'Cluj Napoca', 'hash'),
+    ('radu@example.com', 'Radu', 'Sales Executive', 'Brasov', 'hash'),
+    ('ioana@example.com', 'Ioana', 'UI/UX Designer', 'Remote', 'hash')
+) AS source (Email, Name, Role, Location, PasswordHash)
+ON target.Email = source.Email
 WHEN NOT MATCHED BY TARGET THEN
-    INSERT (Name, Role, Location)
-    VALUES (source.Name, source.Role, source.Location);
+    INSERT (Email, Name, Role, Location, PasswordHash)
+    VALUES (source.Email, source.Name, source.Role, source.Location, source.PasswordHash);
 GO
 
 MERGE INTO Devices AS target

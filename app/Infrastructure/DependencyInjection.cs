@@ -1,9 +1,8 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Data.SqlClient;
 using Domain.Interfaces;
 using Infrastructure.Persistence.Repositories;
-using Infrastructure.Persistence;
+using Application.Interfaces;
+using Infrastructure.Authentication;
 
 namespace Infrastructure
 {
@@ -16,6 +15,8 @@ namespace Infrastructure
 
             services.AddScoped<IUserRepository>(sp => new UserRepository(connectionString));
             services.AddScoped<IDeviceRepository>(sp => new DeviceRepository(connectionString));
+            services.AddScoped<ITokenGenerator, JwtTokenGenerator>();
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
             return services;
         }
     }

@@ -32,8 +32,8 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@OSVersion", device.OSVersion);
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
-        command.Parameters.AddWithValue("@Description", device.Description);
-        command.Parameters.AddWithValue("@UserId", device.UserId);
+        command.Parameters.AddWithValue("@Description", device.Description ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@UserId", device.UserId ?? (object)DBNull.Value);
 
         connection.Open();
         await command.ExecuteNonQueryAsync();
@@ -50,15 +50,19 @@ public class DeviceRepository : IDeviceRepository
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task<bool> DeviceExistsAsync(string name, string manufacturer, int userId)
+    public async Task<bool> DeviceExistsAsync(string name, string manufacturer, int? userId)
     {
         using SqlConnection connection = new(_connectionString);
-        const string existsQuery = "SELECT 1 FROM Devices WHERE Name = @Name AND Manufacturer = @Manufacturer AND UserId = @UserId";
-        
+        string existsQuery = "SELECT 1 FROM Devices WHERE Name = @Name AND Manufacturer = @Manufacturer " + 
+                             (userId.HasValue ? "AND UserId = @UserId" : "AND UserId IS NULL");
+
         using SqlCommand command = new(existsQuery, connection);
         command.Parameters.AddWithValue("@Name", name);
         command.Parameters.AddWithValue("@Manufacturer", manufacturer);
-        command.Parameters.AddWithValue("@UserId", userId);
+        if (userId.HasValue)
+        {
+            command.Parameters.AddWithValue("@UserId", userId.Value);
+        }
 
         await connection.OpenAsync();
 
@@ -146,8 +150,8 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@OSVersion", device.OSVersion);
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
-        command.Parameters.AddWithValue("@Description", device.Description);
-        command.Parameters.AddWithValue("@UserId", device.UserId);
+        command.Parameters.AddWithValue("@Description", device.Description ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@UserId", device.UserId ?? (object)DBNull.Value);
 
         await connection.OpenAsync();
         await command.ExecuteNonQueryAsync();
@@ -165,16 +169,20 @@ public class DeviceRepository : IDeviceRepository
             OSVersion = (string)reader["OSVersion"],
             Processor = (string)reader["Processor"],
             RamGB = reader.GetInt32(reader.GetOrdinal("RamGB")),
-            Description = (string)reader["Description"],
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+            Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? string.Empty : (string)reader["Description"],
+            UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
         };
+
+        if (device.UserId.HasValue)
+        {
             device.User = new User
             {
-                Id = reader.GetInt32(reader.GetOrdinal("UserId")),
-                Name = (string)reader["UserName"],
-                Role = (string)reader["Role"],
-                Location = (string)reader["Location"]
+                Id = device.UserId.Value,
+                Name = reader.IsDBNull(reader.GetOrdinal("UserName")) ? string.Empty : (string)reader["UserName"],
+                Role = reader.IsDBNull(reader.GetOrdinal("Role")) ? string.Empty : (string)reader["Role"],
+                Location = reader.IsDBNull(reader.GetOrdinal("Location")) ? string.Empty : (string)reader["Location"]
             };
+        }
 
         return device;
     }
