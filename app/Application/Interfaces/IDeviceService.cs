@@ -9,4 +9,6 @@ public interface IDeviceService
     Task CreateDeviceAsync(CreateDeviceRequestDto createDeviceDto);
     Task UpdateDeviceAsync(int id, UpdateDeviceRequestDto updateDeviceDto);
     Task DeleteDeviceAsync(int id);
+    Task<IEnumerable<DeviceResponseDto>> GetDevicesByUserIdAsync(int userId);
+    Task<IEnumerable<DeviceResponseDto>> GetUnassignedDevicesAsync();
 }

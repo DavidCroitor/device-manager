@@ -20,9 +20,16 @@ public static class UserEndpoints
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
+            try
+            {
+                await userService.CreateUserAsync(createUserDto);
+                return Results.Created($"/api/users/", new { message = "User created successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { ex.Message });
+            }
 
-            await userService.CreateUserAsync(createUserDto);
-            return Results.Created($"/api/users/", new { message = "User created successfully" });
         }).AllowAnonymous();
 
         group.MapPost("/login", async(
@@ -37,8 +44,8 @@ public static class UserEndpoints
             }
             try
             {
-                string token = await userService.LoginAsync(loginRequest);
-                return Results.Ok(new { Token = token });
+                UserResponseDto user = await userService.LoginAsync(loginRequest);
+                return Results.Ok(new { currentUser = user});
             }
             catch (UnauthorizedAccessException)
             {

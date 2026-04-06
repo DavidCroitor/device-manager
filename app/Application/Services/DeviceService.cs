@@ -139,4 +139,36 @@ public class DeviceService : IDeviceService
         await _deviceRepository.UpdateDeviceAsync(deviceToUpdate);
 
     }
+
+    public async Task<IEnumerable<DeviceResponseDto>> GetDevicesByUserIdAsync(int userId)
+    {
+        var devices = await _deviceRepository.GetDevicesByUserIdAsync(userId);
+        return MapToDeviceResponseDto(devices);
+    }
+
+    public async Task<IEnumerable<DeviceResponseDto>> GetUnassignedDevicesAsync()
+    {
+        var devices = await _deviceRepository.GetUnassignedDevicesAsync();
+        return MapToDeviceResponseDto(devices);
+    }
+
+    private IEnumerable<DeviceResponseDto> MapToDeviceResponseDto(IEnumerable<Device> devices)
+    {
+        return devices.Select(d => new DeviceResponseDto
+        {
+            Id = d.Id,
+            Name = d.Name,
+            Manufacturer = d.Manufacturer,
+            Type = d.Type,
+            OS = d.OS,
+            OSVersion = d.OSVersion,
+            Processor = d.Processor,
+            RamGB = d.RamGB,
+            Description = d.Description,
+            UserId = d.UserId ?? 0,
+            UserName = d.User?.Name ?? "Unassigned",
+            UserRole = d.User?.Role ?? "N/A",
+            UserLocation = d.User?.Location ?? "Storage"
+        }).ToList();
+    }
 }

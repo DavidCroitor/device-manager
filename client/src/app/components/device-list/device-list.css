@@ -4,6 +4,35 @@ h2 {
   text-align: center;
 }
 
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+  margin-bottom: 0;
+}
+
+.tabs button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.tabs button:hover:not(.active) {
+  background-color: #e2e6ea;
+}
+
+.unassigned-text {
+  color: #6c757d;
+  font-style: italic;
+}
+
 button {
   padding: 8px 16px;
   background-color: #007bff;

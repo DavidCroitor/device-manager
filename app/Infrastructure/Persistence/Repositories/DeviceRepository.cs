@@ -157,6 +157,63 @@ public class DeviceRepository : IDeviceRepository
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task<IEnumerable<Device>> GetDevicesByUserIdAsync(int userId)
+    {
+        using SqlConnection connection = new(_connectionString);
+        List<Device> devices = [];
+
+        const string selectQuery =
+            @"SELECT 
+                d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                u.Id AS UserId, 
+                u.Name AS UserName, 
+                u.Role, 
+                u.Location
+            FROM Devices d
+            LEFT JOIN Users u ON d.UserId = u.Id
+            WHERE d.UserId = @UserId";
+        using SqlCommand command = new(selectQuery, connection);
+        command.Parameters.AddWithValue("@UserId", userId);
+        
+        await connection.OpenAsync();
+
+        using SqlDataReader reader = command.ExecuteReader();
+        while (await reader.ReadAsync())
+        {
+            devices.Add(MapToDevice(reader));
+        }
+
+        return devices;
+    }
+
+    public async Task<IEnumerable<Device>> GetUnassignedDevicesAsync()
+    {
+        using SqlConnection connection = new(_connectionString);
+        List<Device> devices = [];
+
+        const string selectQuery =
+            @"SELECT 
+                d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                u.Id AS UserId, 
+                u.Name AS UserName, 
+                u.Role, 
+                u.Location
+            FROM Devices d
+            LEFT JOIN Users u ON d.UserId = u.Id
+            WHERE d.UserId IS NULL";
+        using SqlCommand command = new(selectQuery, connection);
+        
+        await connection.OpenAsync();
+
+        using SqlDataReader reader = command.ExecuteReader();
+        while (await reader.ReadAsync())
+        {
+            devices.Add(MapToDevice(reader));
+        }
+
+        return devices;
+    }
+
     private Device MapToDevice(SqlDataReader reader) 
     {
         var device = new Device

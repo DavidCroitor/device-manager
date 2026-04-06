@@ -19,6 +19,10 @@ internal class UserService : IUserService
     }
     public async Task CreateUserAsync(CreateUserRequestDto createUserDto)
     {
+        if (await _userRepository.GetUserByEmailAsync(createUserDto.Email) != null)
+        {
+            throw new InvalidOperationException("This email is already in use.");
+        }
         string passwordHash = _passwordHasher.HashPassword(createUserDto.Password);
         await _userRepository.AddUserAsync(new User
         {
@@ -86,7 +90,7 @@ internal class UserService : IUserService
         await _userRepository.UpdateUserAsync(userToUpdate);
     }
 
-    public async Task<string> LoginAsync(LoginRequestDto loginRequest)
+    public async Task<UserResponseDto> LoginAsync(LoginRequestDto loginRequest)
     {
         var user = await _userRepository.GetUserByEmailAsync(loginRequest.Email);
         if(user == null || !_passwordHasher.VerifyPassword(loginRequest.Password, user.PasswordHash))
@@ -94,6 +98,16 @@ internal class UserService : IUserService
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
-        return _tokenGenerator.GenerateToken(user);
+        string token = _tokenGenerator.GenerateToken(user);
+
+        return new UserResponseDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            Location = user.Location,
+            Token = token
+        };
     }
 }

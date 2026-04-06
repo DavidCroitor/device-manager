@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Application.Validators;
 using FluentValidation;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace Presentation.Endpoints;
 
@@ -41,6 +42,24 @@ public static class DeviceEndpoints
         group.MapGet("/", async (IDeviceService deviceService) =>
         {
             var devices = await deviceService.GetAllDevicesAsync();
+            return Results.Ok(devices);
+        }).RequireAuthorization();
+
+        group.MapGet("/unassigned", async (IDeviceService deviceService) =>
+        {
+            var devices = await deviceService.GetUnassignedDevicesAsync();
+            return Results.Ok(devices);
+        }).RequireAuthorization();
+
+        group.MapGet("/my-devices", async (IDeviceService deviceService, ClaimsPrincipal user) =>
+        {
+            var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var devices = await deviceService.GetDevicesByUserIdAsync(userId);
             return Results.Ok(devices);
         }).RequireAuthorization();
 
