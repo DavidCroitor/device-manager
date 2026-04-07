@@ -80,6 +80,25 @@ public static class DeviceEndpoints
             }
         }).RequireAuthorization();
 
+        group.MapGet("/description/{id:int}", async (
+            int id,
+            IDeviceService deviceService) =>
+        {
+            try
+            {
+                var description = await deviceService.GetDeviceDescriptionAsync(id);
+                return Results.Ok(new { Description = description });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(new { ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.Message);
+            }
+        }).RequireAuthorization();
+
         group.MapPatch("/{id:int}", async (
             int id,
             UpdateDeviceRequestDto updateDeviceDto,

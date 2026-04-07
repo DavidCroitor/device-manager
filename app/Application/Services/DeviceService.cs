@@ -9,10 +9,15 @@ public class DeviceService : IDeviceService
 {
     private readonly IDeviceRepository _deviceRepository;
     private readonly IUserRepository _userRepository;
-    public DeviceService(IDeviceRepository deviceRepository, IUserRepository userRepository)
+    private readonly IDeviceDescriptionGenerator _deviceDescriptionGenerator;
+    public DeviceService(
+        IDeviceRepository deviceRepository, 
+        IUserRepository userRepository,
+        IDeviceDescriptionGenerator deviceDescriptionGenerator)
     {
         _deviceRepository = deviceRepository;
         _userRepository = userRepository;
+        _deviceDescriptionGenerator = deviceDescriptionGenerator;
     }
 
     public async Task CreateDeviceAsync(CreateDeviceRequestDto createDeviceDto)
@@ -165,6 +170,17 @@ public class DeviceService : IDeviceService
         return MapToDeviceResponseDto(devices);
     }
 
+    public async Task<string> GetDeviceDescriptionAsync(int id)
+    {
+        Device device = await _deviceRepository.GetDeviceByIdAsync(id);
+        if(device == null)
+        {
+            throw new KeyNotFoundException($"Device with ID {id} not found.");
+        }
+
+        return await _deviceDescriptionGenerator.GenerateDescriptionAsync(device);
+    }
+
     private IEnumerable<DeviceResponseDto> MapToDeviceResponseDto(IEnumerable<Device> devices)
     {
         return devices.Select(d => new DeviceResponseDto
@@ -184,4 +200,6 @@ public class DeviceService : IDeviceService
             UserLocation = d.User?.Location ?? "Storage"
         }).ToList();
     }
+
+    
 }

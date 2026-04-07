@@ -37,6 +37,10 @@ export class ApiService {
     return this.http.get<Device[]>(`${this.baseUrl}/devices/unassigned`);
   }
 
+  generateDescription(id: number): Observable<{ description: string }> {
+    return this.http.get<{ description: string }>(`${this.baseUrl}/devices/description/${id}`);
+  }
+
   // --- Users ---
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.baseUrl}/users`);
