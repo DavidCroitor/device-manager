@@ -10,21 +10,40 @@ import { AuthService } from '../../../services/auth.service';
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   styleUrls: ['./login.css'],
   template: `
-    <div class="auth-container">
-      <h2>Login</h2>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        <div *ngIf="errorMessage" class="error-message" style="color: red; margin-bottom: 10px;">
-          {{ errorMessage }}
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to your account to continue</p>
         </div>
-        <label>Email</label>
-        <input type="email" formControlName="email" required />
 
-        <label>Password</label>
-        <input type="password" formControlName="password" required />
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <div *ngIf="errorMessage" class="error-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <span>{{ errorMessage }}</span>
+          </div>
 
-        <button type="submit" [disabled]="loginForm.invalid || loading">Login</button>
-      </form>
-      <p>Don't have an account? <a routerLink="/register">Register</a></p>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" formControlName="email" placeholder="name@company.com" required />
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" formControlName="password" placeholder="••••••••" required />
+          </div>
+
+          <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || loading">
+            {{ loading ? 'Signing in...' : 'Sign In' }}
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Don't have an account? <a routerLink="/register">Create one now</a></p>
+        </div>
+      </div>
     </div>
   `
 })
