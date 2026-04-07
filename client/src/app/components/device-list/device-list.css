@@ -4,6 +4,35 @@ h2 {
   text-align: center;
 }
 
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+  margin-bottom: 0;
+}
+
+.tabs button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.tabs button:hover:not(.active) {
+  background-color: #e2e6ea;
+}
+
+.unassigned-text {
+  color: #6c757d;
+  font-style: italic;
+}
+
 button {
   padding: 8px 16px;
   background-color: #007bff;
@@ -76,6 +105,10 @@ td button {
 .btn-details { background-color: #17a2b8; }
 .btn-edit { background-color: #ffc107; color: #212529; }
 .btn-delete { background-color: transparent; border: 1px solid #dc3545; color: #dc3545 !important; }
+.btn-assign { background-color: #28a745; }
+.btn-unassign { background-color: transparent; border: 1px solid #ffc107; color: black !important; }
 .btn-details:hover { background-color: #138496; }
 .btn-edit:hover { background-color: #e0a800; }
 .btn-delete:hover { background-color: #dc3545; color: white !important; }
+.btn-assign:hover { background-color: #218838; }
+.btn-unassign:hover { background-color: #ffc107; color: white !important; }

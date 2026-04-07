@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { AuthService } from '../../services/auth.service';
 import { Device } from '../../models';
 
 @Component({
@@ -19,9 +20,6 @@ import { Device } from '../../models';
         <li><strong>RAM:</strong> {{ device.ramGB }} GB</li>
         <li><strong>Description:</strong> {{ device.description }}</li>
       </ul>
-      <h3>Assigned To</h3>
-      <p>{{ device.userName }} ({{ device.userRole }}) - {{ device.userLocation }}</p>
-
       <button routerLink="/">Back to List</button>
     }
   `,
@@ -29,11 +27,17 @@ import { Device } from '../../models';
 })
 export class DeviceDetailsComponent implements OnInit {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   device: Device | null = null;
 
   ngOnInit() {
+    this.loadDevice();
+  }
+
+  loadDevice() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getDevice(id).subscribe(data => this.device = data);
   }
 }
+

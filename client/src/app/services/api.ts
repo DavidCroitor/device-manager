@@ -29,6 +29,14 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/devices/${id}`);
   }
 
+  getMyDevices(): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices/my-devices`);
+  }
+
+  getUnassignedDevices(): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices/unassigned`);
+  }
+
   // --- Users ---
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.baseUrl}/users`);

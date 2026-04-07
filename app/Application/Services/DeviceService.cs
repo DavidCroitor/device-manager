@@ -17,18 +17,18 @@ public class DeviceService : IDeviceService
 
     public async Task CreateDeviceAsync(CreateDeviceRequestDto createDeviceDto)
     {
-        if (createDeviceDto.UserId == 0)
+        int? userId = createDeviceDto.UserId == 0 ? null : createDeviceDto.UserId;
+
+        if (userId.HasValue)
         {
-            throw new ArgumentException("UserId is required.");
+            var user = await _userRepository.GetUserByIdAsync(userId.Value);
+            if (user == null)
+            {
+                throw new ArgumentException($"Assignment failed: User with ID {userId.Value} does not exist.");
+            }
         }
 
-        var user = await _userRepository.GetUserByIdAsync(createDeviceDto.UserId);
-        if (user == null)
-        {
-            throw new ArgumentException($"Assignment failed: User with ID {createDeviceDto.UserId} does not exist.");
-        }
-
-        if (await _deviceRepository.DeviceExistsAsync(createDeviceDto.Name, createDeviceDto.Manufacturer, createDeviceDto.UserId))
+        if (await _deviceRepository.DeviceExistsAsync(createDeviceDto.Name, createDeviceDto.Manufacturer, userId))
         {
             throw new InvalidOperationException("A device with the same user, name and manufacturer already exists.");
         }
@@ -43,15 +43,18 @@ public class DeviceService : IDeviceService
             Processor = createDeviceDto.Processor,
             RamGB = createDeviceDto.RamGB,
             Description = createDeviceDto.Description,
-            UserId = createDeviceDto.UserId
+            UserId = userId
         });
     }
 
-    public async Task DeleteDeviceAsync(int id)
+    public async Task DeleteDeviceAsync(int id, int currentUserId)
     {
         Device? existingDevice = await _deviceRepository.GetDeviceByIdAsync(id);
         if (existingDevice == null) {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
+        }
+        if( existingDevice.UserId.HasValue && existingDevice.UserId != currentUserId) {
+            throw new UnauthorizedAccessException("You do not have permission to delete this device.");
         }
         await _deviceRepository.DeleteDeviceAsync(id);
     }
@@ -70,6 +73,7 @@ public class DeviceService : IDeviceService
             Processor = d.Processor,
             RamGB = d.RamGB,
             Description = d.Description,
+            UserId = d.UserId ?? 0,
             UserName =  d.User?.Name ?? "Unassigned",
             UserRole = d.User?.Role ?? "N/A",
             UserLocation = d.User?.Location ?? "Storage"
@@ -99,7 +103,7 @@ public class DeviceService : IDeviceService
             UserLocation = device.User?.Location ?? "Storage"
         };
     }
-    public async Task UpdateDeviceAsync(int id, UpdateDeviceRequestDto updateDeviceDto)
+    public async Task UpdateDeviceAsync(int id, UpdateDeviceRequestDto updateDeviceDto, int currentUserId)
     {
         Device? existingDevice = await _deviceRepository.GetDeviceByIdAsync(id);
         if (existingDevice == null)
@@ -107,10 +111,29 @@ public class DeviceService : IDeviceService
             throw new KeyNotFoundException($"Device with ID {id} not found.");
         }
 
-        var user = await _userRepository.GetUserByIdAsync(existingDevice.UserId);
-        if (user == null)
+        if (existingDevice.UserId.HasValue && existingDevice.UserId != currentUserId)
         {
-            throw new ArgumentException($"User with ID {existingDevice.UserId} does not exist.");
+            throw new UnauthorizedAccessException("You do not have permission to update this device.");
+        }
+
+        if(!existingDevice.UserId.HasValue && updateDeviceDto.UserId != currentUserId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to assign this device to another user.");
+        }
+
+        int? newUserId = updateDeviceDto.UserId ?? existingDevice.UserId;
+        if (updateDeviceDto.UserId == 0)
+        {
+            newUserId = null;
+        }
+
+        if (newUserId.HasValue)
+        {
+            var user = await _userRepository.GetUserByIdAsync(newUserId.Value);
+            if (user == null)
+            {
+                throw new ArgumentException($"User with ID {newUserId.Value} does not exist.");
+            }
         }
 
         var deviceToUpdate = new Device
@@ -124,9 +147,41 @@ public class DeviceService : IDeviceService
             Processor = updateDeviceDto.Processor ?? existingDevice.Processor,
             RamGB = updateDeviceDto.RamGB != 0 ? updateDeviceDto.RamGB : existingDevice.RamGB,
             Description = updateDeviceDto.Description ?? existingDevice.Description,
-            UserId = existingDevice.UserId,
+            UserId = newUserId,
         };
         await _deviceRepository.UpdateDeviceAsync(deviceToUpdate);
 
+    }
+
+    public async Task<IEnumerable<DeviceResponseDto>> GetDevicesByUserIdAsync(int userId)
+    {
+        var devices = await _deviceRepository.GetDevicesByUserIdAsync(userId);
+        return MapToDeviceResponseDto(devices);
+    }
+
+    public async Task<IEnumerable<DeviceResponseDto>> GetUnassignedDevicesAsync()
+    {
+        var devices = await _deviceRepository.GetUnassignedDevicesAsync();
+        return MapToDeviceResponseDto(devices);
+    }
+
+    private IEnumerable<DeviceResponseDto> MapToDeviceResponseDto(IEnumerable<Device> devices)
+    {
+        return devices.Select(d => new DeviceResponseDto
+        {
+            Id = d.Id,
+            Name = d.Name,
+            Manufacturer = d.Manufacturer,
+            Type = d.Type,
+            OS = d.OS,
+            OSVersion = d.OSVersion,
+            Processor = d.Processor,
+            RamGB = d.RamGB,
+            Description = d.Description,
+            UserId = d.UserId ?? 0,
+            UserName = d.User?.Name ?? "Unassigned",
+            UserRole = d.User?.Role ?? "N/A",
+            UserLocation = d.User?.Location ?? "Storage"
+        }).ToList();
     }
 }

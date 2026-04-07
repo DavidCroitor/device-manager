@@ -1,65 +1,42 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ApiService } from '../../services/api';
-import { Device } from '../../models';
+import { AllDevicesComponent } from './all-devices/all-devices';
+import { MyDevicesComponent } from './my-devices/my-devices';
+import { UnassignedDevicesComponent } from './unassigned-devices/unassigned-devices';
 
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AllDevicesComponent, MyDevicesComponent, UnassignedDevicesComponent],
   template: `
     <h2>Devices</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Assigned User</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (device of devices; track device.id) {
-          <tr>
-            <td>{{ device.name }}</td>
-            <td>{{ device.type }}</td>
-            <td>{{ device.userName }} ({{ device.userRole }}) - {{ device.userLocation }}</td>
-            <td>
-              <button [routerLink]="['/devices', device.id]" class="btn btn-details">Details</button>
-              <button [routerLink]="['/devices/edit', device.id]" class="btn btn-edit">Edit</button>
-              <button (click)="deleteDevice(device.id)" class="btn btn-delete">Delete</button>
-            </td>
-          </tr>
-        } @empty {
-          <tr><td colspan="4">No devices found.</td></tr>
-        }
-      </tbody>
-    </table>
-    <div class ="actions-container">
+
+    <div class="tabs">
+      <button [class.active]="currentList === 'all'" (click)="setList('all')" class="btn">All Devices</button>
+      <button [class.active]="currentList === 'mine'" (click)="setList('mine')" class="btn">My Devices</button>
+      <button [class.active]="currentList === 'unassigned'" (click)="setList('unassigned')" class="btn">Unassigned Devices</button>
+    </div>
+
+    @if (currentList === 'all') {
+      <app-all-devices></app-all-devices>
+    } @else if (currentList === 'mine') {
+      <app-my-devices></app-my-devices>
+    } @else if (currentList === 'unassigned') {
+      <app-unassigned-devices></app-unassigned-devices>
+    }
+
+    <div class="actions-container">
       <button routerLink="/devices/new" class="btn btn-create">Create New Device</button>
     </div>
     `,
   styleUrl: './device-list.css'
 })
-export class DeviceListComponent implements OnInit {
-  private api = inject(ApiService);
-  devices: Device[] = [];
+export class DeviceListComponent {
+  currentList: 'all' | 'mine' | 'unassigned' = 'all';
 
-  ngOnInit() {
-    this.loadDevices();
-  }
-
-  loadDevices() {
-    this.api.getDevices().subscribe(data => this.devices = data);
-  }
-
-  deleteDevice(id: number) {
-    if (confirm('Are you sure you want to delete this device?')) {
-      this.api.deleteDevice(id).subscribe(() => {
-        // Refresh the list after deletion
-        this.devices = this.devices.filter(d => d.id !== id);
-      });
-    }
+  setList(list: 'all' | 'mine' | 'unassigned') {
+    this.currentList = list;
   }
 }
+

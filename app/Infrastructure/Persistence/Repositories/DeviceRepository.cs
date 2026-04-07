@@ -32,8 +32,8 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@OSVersion", device.OSVersion);
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
-        command.Parameters.AddWithValue("@Description", device.Description);
-        command.Parameters.AddWithValue("@UserId", device.UserId);
+        command.Parameters.AddWithValue("@Description", device.Description ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@UserId", device.UserId ?? (object)DBNull.Value);
 
         connection.Open();
         await command.ExecuteNonQueryAsync();
@@ -50,15 +50,19 @@ public class DeviceRepository : IDeviceRepository
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task<bool> DeviceExistsAsync(string name, string manufacturer, int userId)
+    public async Task<bool> DeviceExistsAsync(string name, string manufacturer, int? userId)
     {
         using SqlConnection connection = new(_connectionString);
-        const string existsQuery = "SELECT 1 FROM Devices WHERE Name = @Name AND Manufacturer = @Manufacturer AND UserId = @UserId";
-        
+        string existsQuery = "SELECT 1 FROM Devices WHERE Name = @Name AND Manufacturer = @Manufacturer " + 
+                             (userId.HasValue ? "AND UserId = @UserId" : "AND UserId IS NULL");
+
         using SqlCommand command = new(existsQuery, connection);
         command.Parameters.AddWithValue("@Name", name);
         command.Parameters.AddWithValue("@Manufacturer", manufacturer);
-        command.Parameters.AddWithValue("@UserId", userId);
+        if (userId.HasValue)
+        {
+            command.Parameters.AddWithValue("@UserId", userId.Value);
+        }
 
         await connection.OpenAsync();
 
@@ -146,11 +150,68 @@ public class DeviceRepository : IDeviceRepository
         command.Parameters.AddWithValue("@OSVersion", device.OSVersion);
         command.Parameters.AddWithValue("@Processor", device.Processor);
         command.Parameters.AddWithValue("@RamGB", device.RamGB);
-        command.Parameters.AddWithValue("@Description", device.Description);
-        command.Parameters.AddWithValue("@UserId", device.UserId);
+        command.Parameters.AddWithValue("@Description", device.Description ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@UserId", device.UserId ?? (object)DBNull.Value);
 
         await connection.OpenAsync();
         await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<IEnumerable<Device>> GetDevicesByUserIdAsync(int userId)
+    {
+        using SqlConnection connection = new(_connectionString);
+        List<Device> devices = [];
+
+        const string selectQuery =
+            @"SELECT 
+                d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                u.Id AS UserId, 
+                u.Name AS UserName, 
+                u.Role, 
+                u.Location
+            FROM Devices d
+            LEFT JOIN Users u ON d.UserId = u.Id
+            WHERE d.UserId = @UserId";
+        using SqlCommand command = new(selectQuery, connection);
+        command.Parameters.AddWithValue("@UserId", userId);
+        
+        await connection.OpenAsync();
+
+        using SqlDataReader reader = command.ExecuteReader();
+        while (await reader.ReadAsync())
+        {
+            devices.Add(MapToDevice(reader));
+        }
+
+        return devices;
+    }
+
+    public async Task<IEnumerable<Device>> GetUnassignedDevicesAsync()
+    {
+        using SqlConnection connection = new(_connectionString);
+        List<Device> devices = [];
+
+        const string selectQuery =
+            @"SELECT 
+                d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                u.Id AS UserId, 
+                u.Name AS UserName, 
+                u.Role, 
+                u.Location
+            FROM Devices d
+            LEFT JOIN Users u ON d.UserId = u.Id
+            WHERE d.UserId IS NULL";
+        using SqlCommand command = new(selectQuery, connection);
+        
+        await connection.OpenAsync();
+
+        using SqlDataReader reader = command.ExecuteReader();
+        while (await reader.ReadAsync())
+        {
+            devices.Add(MapToDevice(reader));
+        }
+
+        return devices;
     }
 
     private Device MapToDevice(SqlDataReader reader) 
@@ -165,16 +226,20 @@ public class DeviceRepository : IDeviceRepository
             OSVersion = (string)reader["OSVersion"],
             Processor = (string)reader["Processor"],
             RamGB = reader.GetInt32(reader.GetOrdinal("RamGB")),
-            Description = (string)reader["Description"],
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+            Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? string.Empty : (string)reader["Description"],
+            UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
         };
+
+        if (device.UserId.HasValue)
+        {
             device.User = new User
             {
-                Id = reader.GetInt32(reader.GetOrdinal("UserId")),
-                Name = (string)reader["UserName"],
-                Role = (string)reader["Role"],
-                Location = (string)reader["Location"]
+                Id = device.UserId.Value,
+                Name = reader.IsDBNull(reader.GetOrdinal("UserName")) ? string.Empty : (string)reader["UserName"],
+                Role = reader.IsDBNull(reader.GetOrdinal("Role")) ? string.Empty : (string)reader["Role"],
+                Location = reader.IsDBNull(reader.GetOrdinal("Location")) ? string.Empty : (string)reader["Location"]
             };
+        }
 
         return device;
     }

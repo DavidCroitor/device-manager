@@ -19,4 +19,8 @@ export interface User {
   name: string;
   role: string;
   location: string;
+  email?: string;
+  password?: string;
+  token?: string;
 }
+

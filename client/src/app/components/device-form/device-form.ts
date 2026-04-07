@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api';
-import { User } from '../../models';
 
 @Component({
   selector: 'app-device-form',
@@ -27,7 +26,10 @@ import { User } from '../../models';
       </div>
       <div>
         <label>Type:</label>
-        <input formControlName="type">
+        <select formControlName="type">
+          <option value="phone">Phone</option>
+          <option value="tablet">Tablet</option>
+        </select>
       </div>
       <div>
         <label>OS:</label>
@@ -50,22 +52,12 @@ import { User } from '../../models';
         <textarea formControlName="description"></textarea>
       </div>
 
-      <!-- UserId is only needed for creation based on your UpdateDeviceRequestDto -->
-      @if (!isEditMode) {
-        <div>
-          <label>Assign to User:</label>
-          <select formControlName="userId">
-            <option value="" disabled>Select User</option>
-            @for (user of users; track user.id) {
-              <option [value]="user.id">{{ user.name }}</option>
-            }
-          </select>
-        </div>
-      }
-
       <div style="margin-top: 15px;">
         <button type="submit" [disabled]="deviceForm.invalid">Save</button>
         <button type="button" routerLink="/">Cancel</button>
+        @if (isEditMode) {
+          <button type="button" (click)="unassign()" style="margin-left: 10px;" class="btn btn-unassign">Unassign</button>
+        }
       </div>
     </form>
   `,
@@ -77,7 +69,6 @@ export class DeviceFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  users: User[] = [];
   isEditMode = false;
   deviceId: number | null = null;
   errorMessage = '';
@@ -90,20 +81,14 @@ export class DeviceFormComponent implements OnInit {
     osVersion: ['', Validators.required],
     processor: ['', Validators.required],
     ramGB: [null as number | null, [Validators.required, Validators.min(1)]],
-    description: ['', Validators.required],
-    userId: [null as number | null ] // Required dynamically if in create mode
+    description: ['', Validators.required]
   });
 
   ngOnInit() {
     this.deviceId = Number(this.route.snapshot.paramMap.get('id'));
     this.isEditMode = !!this.deviceId;
 
-    if (!this.isEditMode) {
-      // Require userId for creation
-      this.deviceForm.get('userId')?.setValidators(Validators.required);
-      this.api.getUsers().subscribe(u => this.users = u);
-    } else {
-      // Load device details to populate form for updating
+    if (this.isEditMode) {
       this.api.getDevice(this.deviceId).subscribe(device => {
         this.deviceForm.patchValue(device);
       });
@@ -115,10 +100,7 @@ export class DeviceFormComponent implements OnInit {
     this.errorMessage = '';
 
     if (this.isEditMode) {
-      // Remove userId from payload since UpdateDeviceRequestDto doesn't expect it
-      const { userId, ...updatePayload } = this.deviceForm.value;
-
-      this.api.updateDevice(this.deviceId!, updatePayload).subscribe({
+      this.api.updateDevice(this.deviceId!, this.deviceForm.value).subscribe({
         next: () => this.router.navigate(['/']),
         error: (err) => this.handleError(err)
       });
@@ -130,22 +112,28 @@ export class DeviceFormComponent implements OnInit {
     }
   }
 
-    private handleError(err: any) {
+  unassign() {
+    if (this.deviceId) {
+      this.api.updateDevice(this.deviceId, { userId: 0 }).subscribe({
+        next: () => this.router.navigate(['/']),
+        error: (err) => this.handleError(err)
+      });
+    }
+  }
+
+  private handleError(err: any) {
     if (err.status === 409) {
       this.errorMessage = 'This device already exists for this user. Please choose a different name/configuration or choose a different user.';
     } else if (err.status === 400) {
-      // Check if the API returned a structured ProblemDetails error object
       if (err.error && err.error.errors) {
         const errorDict = err.error.errors;
 
-        // Map through all keys to extract the specific validation messages
         const detailedMessages = Object.keys(errorDict)
           .map(key => `${errorDict[key].join(' ')}`)
           .join('\n');
 
         this.errorMessage = `Validation error:\n${detailedMessages}`;
       } else {
-        // Fallback for an unstructured 400 error
         this.errorMessage = 'Validation error. Please check your inputs.';
       }
     } else {

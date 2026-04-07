@@ -2,9 +2,11 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users')
 BEGIN
     CREATE TABLE Users (
         Id INT IDENTITY(1,1) PRIMARY KEY,
+        Email NVARCHAR(255) NOT NULL UNIQUE,
         Name NVARCHAR(100) NOT NULL,
         Role NVARCHAR(50) NOT NULL,
-        Location NVARCHAR(100) NOT NULL
+        Location NVARCHAR(100) NOT NULL,
+        PasswordHash NVARCHAR(255) NOT NULL
     );
 END
 GO
@@ -23,7 +25,7 @@ BEGIN
         RamGB INT NOT NULL,
         Description NVARCHAR(MAX) NULL,
 
-        UserId INT NULL FOREIGN KEY REFERENCES Users(Id) ON DELETE CASCADE
+        UserId INT NULL FOREIGN KEY REFERENCES Users(Id) ON DELETE SET NULL
     );
 END
 GO
