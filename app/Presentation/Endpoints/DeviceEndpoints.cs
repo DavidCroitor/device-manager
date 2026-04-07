@@ -118,11 +118,19 @@ public static class DeviceEndpoints
             }
         }).RequireAuthorization();
 
-        group.MapDelete("/{id:int}", async (int id, IDeviceService deviceService) =>
+        group.MapDelete("/{id:int}", async (
+            int id, 
+            IDeviceService deviceService,
+            ClaimsPrincipal user) =>
         {
+            var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdString, out int currentUserId))
+            {
+                return Results.Unauthorized();
+            }
             try
             {
-                await deviceService.DeleteDeviceAsync(id);
+                await deviceService.DeleteDeviceAsync(id, currentUserId);
                 return Results.Ok(new { Message = "Device deleted successfully" });
             }
             catch (KeyNotFoundException ex)

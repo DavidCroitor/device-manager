@@ -33,7 +33,9 @@ import { Device } from '../../../models';
             </td>
             <td>
               <button [routerLink]="['/devices', device.id]" class="btn btn-details">Details</button>
-              <button (click)="unassign(device.id)" class="btn btn-edit">Unassign</button>
+              <button [routerLink]="['/devices/edit', device.id]" class="btn btn-edit">Edit</button>
+              <button (click)="deleteDevice(device.id)" class="btn btn-delete">Delete</button>
+
             </td>
           </tr>
         } @empty {
@@ -61,9 +63,11 @@ export class MyDevicesComponent implements OnInit {
     });
   }
 
-  unassign(deviceId: number) {
-    this.api.updateDevice(deviceId, { userId: 0 }).subscribe(() => {
-      this.loadDevices();
-    });
+  deleteDevice(id: number) {
+    if (confirm('Are you sure you want to delete this device?')) {
+      this.api.deleteDevice(id).subscribe(() => {
+        this.devices = this.devices.filter(d => d.id !== id);
+      });
+    }
   }
 }

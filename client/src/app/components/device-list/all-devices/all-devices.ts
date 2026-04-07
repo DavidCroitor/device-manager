@@ -32,8 +32,6 @@ import { Device } from '../../../models';
             </td>
             <td>
               <button [routerLink]="['/devices', device.id]" class="btn btn-details">Details</button>
-              <button [routerLink]="['/devices/edit', device.id]" class="btn btn-edit">Edit</button>
-              <button (click)="deleteDevice(device.id)" class="btn btn-delete">Delete</button>
             </td>
           </tr>
         } @empty {
@@ -54,13 +52,5 @@ export class AllDevicesComponent implements OnInit {
 
   loadDevices() {
     this.api.getDevices().subscribe(data => this.devices = data);
-  }
-
-  deleteDevice(id: number) {
-    if (confirm('Are you sure you want to delete this device?')) {
-      this.api.deleteDevice(id).subscribe(() => {
-        this.devices = this.devices.filter(d => d.id !== id);
-      });
-    }
   }
 }

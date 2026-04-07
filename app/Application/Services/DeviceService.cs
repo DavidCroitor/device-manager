@@ -47,11 +47,14 @@ public class DeviceService : IDeviceService
         });
     }
 
-    public async Task DeleteDeviceAsync(int id)
+    public async Task DeleteDeviceAsync(int id, int currentUserId)
     {
         Device? existingDevice = await _deviceRepository.GetDeviceByIdAsync(id);
         if (existingDevice == null) {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
+        }
+        if( existingDevice.UserId.HasValue && existingDevice.UserId != currentUserId) {
+            throw new UnauthorizedAccessException("You do not have permission to delete this device.");
         }
         await _deviceRepository.DeleteDeviceAsync(id);
     }
@@ -108,9 +111,14 @@ public class DeviceService : IDeviceService
             throw new KeyNotFoundException($"Device with ID {id} not found.");
         }
 
-        if (existingDevice.UserId != null && existingDevice.UserId != currentUserId)
+        if (existingDevice.UserId.HasValue && existingDevice.UserId != currentUserId)
         {
             throw new UnauthorizedAccessException("You do not have permission to update this device.");
+        }
+
+        if(!existingDevice.UserId.HasValue && updateDeviceDto.UserId != currentUserId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to assign this device to another user.");
         }
 
         int? newUserId = updateDeviceDto.UserId ?? existingDevice.UserId;

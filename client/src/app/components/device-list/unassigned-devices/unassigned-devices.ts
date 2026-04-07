@@ -29,7 +29,7 @@ import { Device } from '../../../models';
             </td>
             <td>
               <button [routerLink]="['/devices', device.id]" class="btn btn-details">Details</button>
-              <button (click)="assign(device.id)" class="btn btn-edit">Assign</button>
+              <button (click)="assign(device.id)" class="btn btn-assign">Assign</button>
             </td>
           </tr>
         } @empty {

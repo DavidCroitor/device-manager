@@ -105,6 +105,10 @@ td button {
 .btn-details { background-color: #17a2b8; }
 .btn-edit { background-color: #ffc107; color: #212529; }
 .btn-delete { background-color: transparent; border: 1px solid #dc3545; color: #dc3545 !important; }
+.btn-assign { background-color: #28a745; }
+.btn-unassign { background-color: transparent; border: 1px solid #ffc107; color: black !important; }
 .btn-details:hover { background-color: #138496; }
 .btn-edit:hover { background-color: #e0a800; }
 .btn-delete:hover { background-color: #dc3545; color: white !important; }
+.btn-assign:hover { background-color: #218838; }
+.btn-unassign:hover { background-color: #ffc107; color: white !important; }
