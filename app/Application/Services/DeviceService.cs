@@ -100,12 +100,17 @@ public class DeviceService : IDeviceService
             UserLocation = device.User?.Location ?? "Storage"
         };
     }
-    public async Task UpdateDeviceAsync(int id, UpdateDeviceRequestDto updateDeviceDto)
+    public async Task UpdateDeviceAsync(int id, UpdateDeviceRequestDto updateDeviceDto, int currentUserId)
     {
         Device? existingDevice = await _deviceRepository.GetDeviceByIdAsync(id);
         if (existingDevice == null)
         {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
+        }
+
+        if (existingDevice.UserId != null && existingDevice.UserId != currentUserId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update this device.");
         }
 
         int? newUserId = updateDeviceDto.UserId ?? existingDevice.UserId;

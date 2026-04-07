@@ -84,8 +84,15 @@ public static class DeviceEndpoints
             int id,
             UpdateDeviceRequestDto updateDeviceDto,
             IDeviceService deviceService,
-            IValidator<UpdateDeviceRequestDto> validator) =>
+            IValidator<UpdateDeviceRequestDto> validator,
+            ClaimsPrincipal user) =>
         {
+            var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(!int.TryParse(userIdString, out int currentUserId))
+            {
+                return Results.Unauthorized();
+            }
+
             var validationResult = await validator.ValidateAsync(updateDeviceDto);
             if (!validationResult.IsValid)
             {
@@ -94,7 +101,7 @@ public static class DeviceEndpoints
 
             try
             {
-                await deviceService.UpdateDeviceAsync(id, updateDeviceDto);
+                await deviceService.UpdateDeviceAsync(id, updateDeviceDto, currentUserId);
                 return Results.Ok(new { Message = "Device updated successfully" });
             }
             catch (KeyNotFoundException ex)
@@ -104,6 +111,10 @@ public static class DeviceEndpoints
             catch (ArgumentException ex)
             {
                 return Results.BadRequest(new { ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Results.Problem(statusCode: StatusCodes.Status403Forbidden, detail: ex.Message);
             }
         }).RequireAuthorization();
 
