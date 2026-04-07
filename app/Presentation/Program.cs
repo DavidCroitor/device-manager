@@ -1,4 +1,5 @@
 using Application;
+using GroqApiLibrary;
 using Infrastructure;
 using Infrastructure.Authentication;
 using Infrastructure.Persistence;
@@ -10,6 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+string groqApiKey = builder.Configuration["GroqApiKey"]
+    ?? throw new InvalidOperationException("GroqApiKey was not found.");
+
 var clientURL = "http://localhost:4200";
 
 builder.Services.AddCors(options =>
@@ -39,7 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
-builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddInfrastructure(connectionString, groqApiKey);
 builder.Services.AddApplication();
 
 DatabaseInitializer.Initialize(connectionString);

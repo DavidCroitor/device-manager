@@ -11,4 +11,5 @@ public interface IDeviceService
     Task DeleteDeviceAsync(int id, int currentUserId);
     Task<IEnumerable<DeviceResponseDto>> GetDevicesByUserIdAsync(int userId);
     Task<IEnumerable<DeviceResponseDto>> GetUnassignedDevicesAsync();
+    Task<string> GetDeviceDescriptionAsync(int id);
 }
