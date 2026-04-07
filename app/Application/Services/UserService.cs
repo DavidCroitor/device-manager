@@ -84,7 +84,9 @@ internal class UserService : IUserService
             Id = existingUser.Id,
             Name = updateUserDto.Name ?? existingUser.Name,
             Role = updateUserDto.Role ?? existingUser.Role,
-            Location = updateUserDto.Location ?? existingUser.Location
+            Location = updateUserDto.Location ?? existingUser.Location,
+            Email = existingUser.Email,
+            PasswordHash = existingUser.PasswordHash
         };
 
         await _userRepository.UpdateUserAsync(userToUpdate);

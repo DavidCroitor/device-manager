@@ -25,11 +25,14 @@ public class UserEndpointsTests : IClassFixture<DeviceManagerApiFactory>
         var request = new CreateUserRequestDto
         {
             Name = "Test User",
+            Email = "test@example.com",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!",
             Role = "Developer",
             Location = "Cluj"
         };
 
-        var response = await _client.PostAsJsonAsync("/api/users", request);
+        var response = await _client.PostAsJsonAsync("/api/users/register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
@@ -42,9 +45,59 @@ public class UserEndpointsTests : IClassFixture<DeviceManagerApiFactory>
     {
         var request = new CreateUserRequestDto { Name = "", Role = "" };
 
-        var response = await _client.PostAsJsonAsync("/api/users", request);
+        var response = await _client.PostAsJsonAsync("/api/users/register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Login_WithValidData_ReturnsOk()
+    {
+        var registerRequest = new CreateUserRequestDto
+        {
+            Name = "Login User",
+            Email = "loginuser@example.com",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!",
+            Role = "Developer",
+            Location = "Cluj"
+        };
+        await _client.PostAsJsonAsync("/api/users/register", registerRequest);
+
+        var loginRequest = new LoginRequestDto
+        {
+            Email = "loginuser@example.com",
+            Password = "Password123!"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidPassword_ReturnsUnauthorized()
+    {
+        var registerRequest = new CreateUserRequestDto
+        {
+            Name = "Login User 2",
+            Email = "loginuser2@example.com",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!",
+            Role = "Developer",
+            Location = "Cluj"
+        };
+        await _client.PostAsJsonAsync("/api/users/register", registerRequest);
+
+        var loginRequest = new LoginRequestDto
+        {
+            Email = "loginuser2@example.com",
+            Password = "WrongPassword!"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -78,10 +131,18 @@ public class UserEndpointsTests : IClassFixture<DeviceManagerApiFactory>
     [Fact]
     public async Task DeleteUser_WhenExists_ReturnsOk()
     {
-        var createRequest = new CreateUserRequestDto { Name = "Temp", Role = "Test", Location = "Test" };
-        var createResponse = await _client.PostAsJsonAsync("/api/users", createRequest);
+        var createRequest = new CreateUserRequestDto 
+        { 
+            Name = "Temp", 
+            Email = "temp@example.com",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!",
+            Role = "Test", 
+            Location = "Test" 
+        };
+        var createResponse = await _client.PostAsJsonAsync("/api/users/register", createRequest);
 
-        int idToDelete = 2;
+        int idToDelete = 2; 
 
         var response = await _client.DeleteAsync($"/api/users/{idToDelete}");
 
