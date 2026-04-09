@@ -12,4 +12,5 @@ public interface IDeviceRepository
     Task<bool> DeviceExistsAsync(string name, string manufacturer, int? userId);
     Task<IEnumerable<Device>> GetDevicesByUserIdAsync(int userId);
     Task<IEnumerable<Device>> GetUnassignedDevicesAsync();
+    Task<IEnumerable<Device>> SearchDeviceAsync(string query);
 }

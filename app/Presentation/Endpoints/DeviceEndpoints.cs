@@ -3,6 +3,7 @@ using Application.DTOs.UserDtos;
 using Application.Interfaces;
 using Application.Validators;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
@@ -97,6 +98,14 @@ public static class DeviceEndpoints
             {
                 return Results.Problem(ex.Message);
             }
+        }).RequireAuthorization();
+
+        group.MapGet("/search", async(
+            [FromQuery] string queryString,
+            IDeviceService deviceService) =>
+        {
+            var results = await deviceService.SearchDeviceAsync(queryString);
+            return Results.Ok(results);
         }).RequireAuthorization();
 
         group.MapPatch("/{id:int}", async (
