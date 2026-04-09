@@ -28,32 +28,54 @@ import { AuthService } from '../../../services/auth.service';
           <div class="form-grid">
             <div class="form-group full-width">
               <label>Full Name</label>
-              <input type="text" formControlName="name" placeholder="John Doe" required />
+              <input type="text" formControlName="name" placeholder="John Doe" required [class.error-input]="f['name'].invalid && f['name'].touched" />
+              <div *ngIf="f['name'].invalid && f['name'].touched" class="error-text">
+                <small *ngIf="f['name'].errors?.['required']">Full Name is required.</small>
+              </div>
             </div>
 
             <div class="form-group full-width">
               <label>Email Address</label>
-              <input type="email" formControlName="email" placeholder="john@company.com" required />
+              <input type="email" formControlName="email" placeholder="john@company.com" required [class.error-input]="f['email'].invalid && f['email'].touched" />
+              <div *ngIf="f['email'].invalid && f['email'].touched" class="error-text">
+                <small *ngIf="f['email'].errors?.['required']">Email is required.</small>
+                <small *ngIf="f['email'].errors?.['email']">Please enter a valid email address.</small>
+              </div>
             </div>
 
             <div class="form-group">
               <label>Role</label>
-              <input type="text" formControlName="role" placeholder="e.g. Developer" required />
+              <input type="text" formControlName="role" placeholder="e.g. Developer" required [class.error-input]="f['role'].invalid && f['role'].touched" />
+              <div *ngIf="f['role'].invalid && f['role'].touched" class="error-text">
+                <small *ngIf="f['role'].errors?.['required']">Role is required.</small>
+              </div>
             </div>
 
             <div class="form-group">
               <label>Location</label>
-              <input type="text" formControlName="location" placeholder="e.g. Cluj-Napoca" required />
+              <input type="text" formControlName="location" placeholder="e.g. Cluj-Napoca" required [class.error-input]="f['location'].invalid && f['location'].touched" />
+              <div *ngIf="f['location'].invalid && f['location'].touched" class="error-text">
+                <small *ngIf="f['location'].errors?.['required']">Location is required.</small>
+              </div>
             </div>
 
             <div class="form-group">
               <label>Password</label>
-              <input type="password" formControlName="password" placeholder="••••••••" required />
+              <input type="password" formControlName="password" placeholder="••••••••" required [class.error-input]="f['password'].invalid && f['password'].touched" />
+              <div *ngIf="f['password'].invalid && f['password'].touched" class="error-text">
+                <small *ngIf="f['password'].errors?.['required']">Password is required.</small>
+                <small *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters long.</small>
+                <small *ngIf="f['password'].errors?.['pattern'] && !f['password'].errors?.['minlength']">Password must contain at least a number, uppercase and lowercase letter.</small>
+              </div>
             </div>
 
             <div class="form-group">
               <label>Confirm Password</label>
-              <input type="password" formControlName="confirmPassword" placeholder="••••••••" required />
+              <input type="password" formControlName="confirmPassword" placeholder="••••••••" required [class.error-input]="f['confirmPassword'].invalid && f['confirmPassword'].touched" />
+              <div *ngIf="(f['confirmPassword'].invalid || registerForm.errors?.['passwordsMismatch']) && f['confirmPassword'].touched" class="error-text">
+                <small *ngIf="f['confirmPassword'].errors?.['required']">Please confirm your password.</small>
+                <small *ngIf="registerForm.errors?.['passwordsMismatch'] && !f['confirmPassword'].errors?.['required']">Passwords do not match.</small>
+              </div>
             </div>
           </div>
 
@@ -74,6 +96,10 @@ export class RegisterComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
 
+  get f() {
+    return this.registerForm.controls;
+  }
+
   passwordsMatch = (group: any) => {
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
@@ -85,7 +111,11 @@ export class RegisterComponent {
     email: ['', [Validators.required, Validators.email]],
     role: ['', Validators.required],
     location: ['', Validators.required],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [
+      Validators.required,
+      Validators.minLength(6),
+      Validators.pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/)
+    ]],
     confirmPassword: ['', Validators.required]
   }, { validators: this.passwordsMatch });
 
