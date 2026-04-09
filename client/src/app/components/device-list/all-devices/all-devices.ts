@@ -35,7 +35,7 @@ import { Device } from '../../../models';
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="4">No devices found in this list.</td></tr>
+          <tr><td colspan="4">No devices found.</td></tr>
         }
       </tbody>
     </table>
@@ -45,6 +45,7 @@ import { Device } from '../../../models';
 export class AllDevicesComponent implements OnInit {
   private api = inject(ApiService);
   devices: Device[] = [];
+  isSearching = false;
 
   ngOnInit() {
     this.loadDevices();
@@ -52,5 +53,19 @@ export class AllDevicesComponent implements OnInit {
 
   loadDevices() {
     this.api.getDevices().subscribe(data => this.devices = data);
+  }
+
+  onSearch(query: string) {
+    if (!query.trim()) {
+      this.clearSearch();
+      return;
+    }
+    this.isSearching = true;
+    this.api.searchDevices(query).subscribe(data => this.devices = data);
+  }
+
+  clearSearch() {
+    this.isSearching = false;
+    this.loadDevices();
   }
 }

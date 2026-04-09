@@ -13,6 +13,10 @@ export class ApiService {
     return this.http.get<Device[]>(`${this.baseUrl}/devices`);
   }
 
+  searchDevices(queryString: string): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices/search?queryString=${queryString}`);
+  }
+
   getDevice(id: number): Observable<Device> {
     return this.http.get<Device>(`${this.baseUrl}/devices/${id}`);
   }

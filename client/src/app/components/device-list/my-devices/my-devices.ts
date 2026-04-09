@@ -39,7 +39,7 @@ import { Device } from '../../../models';
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="4">No devices found in this list.</td></tr>
+          <tr><td colspan="4">You have no devices assigned.</td></tr>
         }
       </tbody>
     </table>

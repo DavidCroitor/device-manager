@@ -172,13 +172,18 @@ public class DeviceService : IDeviceService
 
     public async Task<string> GetDeviceDescriptionAsync(int id)
     {
-        Device device = await _deviceRepository.GetDeviceByIdAsync(id);
+        Device? device = await _deviceRepository.GetDeviceByIdAsync(id);
         if(device == null)
         {
             throw new KeyNotFoundException($"Device with ID {id} not found.");
         }
 
         return await _deviceDescriptionGenerator.GenerateDescriptionAsync(device);
+    }
+    public async Task<IEnumerable<DeviceResponseDto>> SearchDeviceAsync(string query)
+    {
+        var devices = await _deviceRepository.SearchDeviceAsync(query);
+        return MapToDeviceResponseDto(devices);
     }
 
     private IEnumerable<DeviceResponseDto> MapToDeviceResponseDto(IEnumerable<Device> devices)

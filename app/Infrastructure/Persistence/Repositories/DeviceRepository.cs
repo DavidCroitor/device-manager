@@ -1,4 +1,6 @@
 using System.Data;
+using System.Text;
+using System.Text.RegularExpressions;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.Data.SqlClient;
@@ -214,7 +216,72 @@ public class DeviceRepository : IDeviceRepository
         return devices;
     }
 
-    private Device MapToDevice(SqlDataReader reader) 
+    public async Task<IEnumerable<Device>> SearchDeviceAsync(string query)
+    {
+        if(string.IsNullOrWhiteSpace(query))
+        {
+            return await GetAllDevicesAsync();
+        }
+            
+        List<Device> devices = [];
+        string cleanQuery = Regex.Replace(query, @"[^\w\s]", "");
+        string[] tokens = cleanQuery.Split(new[] { ' '}, StringSplitOptions.RemoveEmptyEntries);
+
+        if (tokens.Length == 0)
+        {
+            return await GetAllDevicesAsync();
+        }
+
+        using SqlConnection connection = new(_connectionString);
+        var sql = new StringBuilder();
+        sql.AppendLine(
+            @"SELECT d.Id, d.Name, d.Manufacturer, d.Type, d.OS, d.OSVersion, d.Processor, d.RamGB, d.Description,
+                     u.Id AS UserId,u.Name AS UserName, u.Role, u.Location, (");
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            string paramName = $"@t{i}";
+            sql.AppendLine($"(CASE WHEN d.Name LIKE {paramName} THEN 10 ELSE 0 END) +");
+            sql.AppendLine($"(CASE WHEN d.Manufacturer LIKE {paramName} THEN 5 ELSE 0 END) +");
+            sql.AppendLine($"(CASE WHEN d.Processor LIKE {paramName} THEN 3 ELSE 0 END) +");
+            sql.AppendLine($"(CASE WHEN d.RamGB LIKE {paramName} THEN 2 ELSE 0 END)" + (i == tokens.Length - 1 ? "" : " +"));
+        }
+
+        sql.AppendLine(") AS RelevanceScore");
+        sql.AppendLine("FROM Devices d");
+        sql.AppendLine("LEFT JOIN Users u ON d.UserId = u.Id");
+
+        sql.AppendLine("WHERE");
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            string paramName = $"@t{i}";
+            sql.AppendLine($"(d.Name LIKE {paramName} OR d.Manufacturer LIKE {paramName} OR d.Processor LIKE {paramName} OR d.RamGB LIKE {paramName})");
+            if (i < tokens.Length - 1)
+            {
+                sql.AppendLine(" OR ");
+            }
+        }
+
+        sql.AppendLine("ORDER BY RelevanceScore DESC, Name ASC");
+
+        SqlCommand cmd = new(sql.ToString(), connection);
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            cmd.Parameters.AddWithValue($"@t{i}", $"%{tokens[i]}%");
+        }
+
+        await connection.OpenAsync();
+        using SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            devices.Add(MapToDevice(reader));
+        }
+
+        return devices;
+    }
+
+    private Device MapToDevice(SqlDataReader reader)
     {
         var device = new Device
         {
@@ -243,4 +310,5 @@ public class DeviceRepository : IDeviceRepository
 
         return device;
     }
+
 }
