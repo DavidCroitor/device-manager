@@ -73,7 +73,7 @@ public class DeviceRepository : IDeviceRepository
 
     }
 
-    public async Task<IEnumerable<Device>> GetAllDevicesAsync()
+    public async Task<IEnumerable<Device>> GetAllDevicesAsync(int page = 1, int pageSize = 10)
     {
         using SqlConnection connection = new(_connectionString);
         List<Device> devices = [];
@@ -86,9 +86,13 @@ public class DeviceRepository : IDeviceRepository
                 u.Role, 
                 u.Location
             FROM Devices d
-            LEFT JOIN Users u ON d.UserId = u.Id";
+            LEFT JOIN Users u ON d.UserId = u.Id
+            ORDER BY d.Id
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
         using SqlCommand command = new(selectQuery, connection);
-        
+        command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
+        command.Parameters.AddWithValue("@PageSize", pageSize);
+
         await connection.OpenAsync();
 
         using SqlDataReader reader = command.ExecuteReader();
@@ -159,7 +163,7 @@ public class DeviceRepository : IDeviceRepository
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task<IEnumerable<Device>> GetDevicesByUserIdAsync(int userId)
+    public async Task<IEnumerable<Device>> GetDevicesByUserIdAsync(int userId, int page = 1, int pageSize = 10)
     {
         using SqlConnection connection = new(_connectionString);
         List<Device> devices = [];
@@ -173,10 +177,14 @@ public class DeviceRepository : IDeviceRepository
                 u.Location
             FROM Devices d
             LEFT JOIN Users u ON d.UserId = u.Id
-            WHERE d.UserId = @UserId";
+            WHERE d.UserId = @UserId
+            ORDER BY d.Id
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
         using SqlCommand command = new(selectQuery, connection);
         command.Parameters.AddWithValue("@UserId", userId);
-        
+        command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
+        command.Parameters.AddWithValue("@PageSize", pageSize);
+
         await connection.OpenAsync();
 
         using SqlDataReader reader = command.ExecuteReader();
@@ -188,7 +196,7 @@ public class DeviceRepository : IDeviceRepository
         return devices;
     }
 
-    public async Task<IEnumerable<Device>> GetUnassignedDevicesAsync()
+    public async Task<IEnumerable<Device>> GetUnassignedDevicesAsync(int page = 1, int pageSize = 10)
     {
         using SqlConnection connection = new(_connectionString);
         List<Device> devices = [];
@@ -202,9 +210,13 @@ public class DeviceRepository : IDeviceRepository
                 u.Location
             FROM Devices d
             LEFT JOIN Users u ON d.UserId = u.Id
-            WHERE d.UserId IS NULL";
+            WHERE d.UserId IS NULL
+            ORDER BY d.Id
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
         using SqlCommand command = new(selectQuery, connection);
-        
+        command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
+        command.Parameters.AddWithValue("@PageSize", pageSize);
+
         await connection.OpenAsync();
 
         using SqlDataReader reader = command.ExecuteReader();
@@ -216,7 +228,7 @@ public class DeviceRepository : IDeviceRepository
         return devices;
     }
 
-    public async Task<IEnumerable<Device>> SearchDeviceAsync(string query)
+    public async Task<IEnumerable<Device>> SearchDeviceAsync(string query, int page = 1, int pageSize = 10)
     {
         if(string.IsNullOrWhiteSpace(query))
         {
@@ -263,15 +275,21 @@ public class DeviceRepository : IDeviceRepository
         }
 
         sql.AppendLine("ORDER BY RelevanceScore DESC, Name ASC");
+        sql.AppendLine("OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
 
-        SqlCommand cmd = new(sql.ToString(), connection);
+
+        SqlCommand command = new(sql.ToString(), connection);
         for (int i = 0; i < tokens.Length; i++)
         {
-            cmd.Parameters.AddWithValue($"@t{i}", $"%{tokens[i]}%");
+            command.Parameters.AddWithValue($"@t{i}", $"%{tokens[i]}%");
         }
 
+        command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
+        command.Parameters.AddWithValue("@PageSize", pageSize);
+
+
         await connection.OpenAsync();
-        using SqlDataReader reader = await cmd.ExecuteReaderAsync();
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
 
         while (await reader.ReadAsync())
         {

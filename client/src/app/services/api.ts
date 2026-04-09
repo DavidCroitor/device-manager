@@ -9,12 +9,12 @@ export class ApiService {
   private baseUrl = 'http://localhost:5000/api';
 
   // --- Devices ---
-  getDevices(): Observable<Device[]> {
-    return this.http.get<Device[]>(`${this.baseUrl}/devices`);
+  getDevices(pageNumber: number = 1, pageSize: number = 10): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices?pageNumber=${pageNumber}&pageSize=${pageSize}`);
   }
 
-  searchDevices(queryString: string): Observable<Device[]> {
-    return this.http.get<Device[]>(`${this.baseUrl}/devices/search?queryString=${queryString}`);
+  searchDevices(queryString: string, pageNumber: number = 1, pageSize: number = 10): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices/search?queryString=${queryString}&pageNumber=${pageNumber}&pageSize=${pageSize}`);
   }
 
   getDevice(id: number): Observable<Device> {
@@ -33,12 +33,12 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/devices/${id}`);
   }
 
-  getMyDevices(): Observable<Device[]> {
-    return this.http.get<Device[]>(`${this.baseUrl}/devices/my-devices`);
+  getMyDevices(pageNumber: number = 1, pageSize: number = 10): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices/my-devices?pageNumber=${pageNumber}&pageSize=${pageSize}`);
   }
 
-  getUnassignedDevices(): Observable<Device[]> {
-    return this.http.get<Device[]>(`${this.baseUrl}/devices/unassigned`);
+  getUnassignedDevices(pageNumber: number = 1, pageSize: number = 10): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.baseUrl}/devices/unassigned?pageNumber=${pageNumber}&pageSize=${pageSize}`);
   }
 
   generateDescription(id: number): Observable<{ description: string }> {

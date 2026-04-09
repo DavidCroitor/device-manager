@@ -40,19 +40,30 @@ public static class DeviceEndpoints
             }
         }).RequireAuthorization();
 
-        group.MapGet("/", async (IDeviceService deviceService) =>
+        group.MapGet("/", async (
+            [FromQuery] int? pageNumber,
+            [FromQuery] int? pageSize,
+            IDeviceService deviceService) =>
         {
-            var devices = await deviceService.GetAllDevicesAsync();
+
+            var devices = await deviceService.GetAllDevicesAsync(pageNumber ?? 1, pageSize ?? 10);
             return Results.Ok(devices);
         }).RequireAuthorization();
 
-        group.MapGet("/unassigned", async (IDeviceService deviceService) =>
+        group.MapGet("/unassigned", async (
+            [FromQuery] int? pageNumber,
+            [FromQuery] int? pageSize,
+            IDeviceService deviceService) =>
         {
-            var devices = await deviceService.GetUnassignedDevicesAsync();
+            var devices = await deviceService.GetUnassignedDevicesAsync(pageNumber ?? 1, pageSize ?? 10);
             return Results.Ok(devices);
         }).RequireAuthorization();
 
-        group.MapGet("/my-devices", async (IDeviceService deviceService, ClaimsPrincipal user) =>
+        group.MapGet("/my-devices", async (
+            [FromQuery] int? pageNumber,
+            [FromQuery] int? pageSize,
+            IDeviceService deviceService, 
+            ClaimsPrincipal user) =>
         {
             var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdString, out int userId))
@@ -60,7 +71,7 @@ public static class DeviceEndpoints
                 return Results.Unauthorized();
             }
 
-            var devices = await deviceService.GetDevicesByUserIdAsync(userId);
+            var devices = await deviceService.GetDevicesByUserIdAsync(userId, pageNumber ?? 1, pageSize ?? 10);
             return Results.Ok(devices);
         }).RequireAuthorization();
 
@@ -102,9 +113,11 @@ public static class DeviceEndpoints
 
         group.MapGet("/search", async(
             [FromQuery] string queryString,
+            [FromQuery] int? pageNumber,
+            [FromQuery] int? pageSize,
             IDeviceService deviceService) =>
         {
-            var results = await deviceService.SearchDeviceAsync(queryString);
+            var results = await deviceService.SearchDeviceAsync(queryString, pageNumber ?? 1, pageSize ?? 10);
             return Results.Ok(results);
         }).RequireAuthorization();
 

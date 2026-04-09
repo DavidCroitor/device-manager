@@ -37,6 +37,11 @@ import { Device } from '../../../models';
         }
       </tbody>
     </table>
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="pageNumber === 1">Previous</button>
+      <span>Page {{ pageNumber }}</span>
+      <button (click)="nextPage()" [disabled]="devices.length < pageSize">Next</button>
+    </div>
   `,
   styleUrl: '../device-list.css'
 })
@@ -45,13 +50,15 @@ export class UnassignedDevicesComponent implements OnInit {
   private auth = inject(AuthService);
 
   devices: Device[] = [];
+  pageNumber = 1;
+  pageSize = 10;
 
   ngOnInit() {
     this.loadDevices();
   }
 
   loadDevices() {
-    this.api.getUnassignedDevices().subscribe(data => {
+    this.api.getUnassignedDevices(this.pageNumber, this.pageSize).subscribe(data => {
         this.devices = data.filter(d => !d.userId);
     });
   }
@@ -62,6 +69,20 @@ export class UnassignedDevicesComponent implements OnInit {
       this.api.updateDevice(deviceId, { userId: currentUser.id }).subscribe(() => {
         this.loadDevices();
       });
+    }
+  }
+
+  prevPage() {
+    if (this.pageNumber > 1) {
+      this.pageNumber--;
+      this.loadDevices();
+    }
+  }
+
+  nextPage() {
+    if (this.devices.length >= this.pageSize) {
+      this.pageNumber++;
+      this.loadDevices();
     }
   }
 }
