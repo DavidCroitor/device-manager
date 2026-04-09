@@ -129,10 +129,8 @@ public class DeviceEndpointsTests : IClassFixture<DeviceManagerApiFactory>
     [Fact]
     public async Task GetDeviceById_WhenExists_ReturnsOk()
     {
-        // Act
         var response = await _client.GetAsync("/api/devices/1");
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var device = await response.Content.ReadFromJsonAsync<DeviceResponseDto>();
         device.Should().NotBeNull();
@@ -148,7 +146,7 @@ public class DeviceEndpointsTests : IClassFixture<DeviceManagerApiFactory>
             RamGB = 12
         };
 
-        var response = await _client.PatchAsJsonAsync("/api/devices/1", updateRequest);
+        var response = await _client.PatchAsJsonAsync("/api/devices/10", updateRequest);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -196,5 +194,46 @@ public class DeviceEndpointsTests : IClassFixture<DeviceManagerApiFactory>
         var response = await _client.DeleteAsync("/api/devices/99999");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetDeviceDescription_WhenExists_ReturnsOk()
+    {
+        var response = await _client.GetAsync("/api/devices/description/1");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task GetDeviceDescription_WhenNotExists_ReturnsNotFound()
+    {
+        var response = await _client.GetAsync("/api/devices/description/99999");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task SearchDevices_ReturnsOk()
+    {
+        var response = await _client.GetAsync("/api/devices/search?queryString=iPhone");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateDevice_WhenUserDoesNotOwnDevice_ReturnsForbidden()
+    {
+        var updateRequest = new UpdateDeviceRequestDto
+        {
+            Name = "Unauthorized Update"
+        };
+
+        var response = await _client.PatchAsJsonAsync("/api/devices/1", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }
