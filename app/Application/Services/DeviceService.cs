@@ -64,9 +64,9 @@ public class DeviceService : IDeviceService
         await _deviceRepository.DeleteDeviceAsync(id);
     }
 
-    public async Task<IEnumerable<DeviceResponseDto>> GetAllDevicesAsync()
+    public async Task<IEnumerable<DeviceResponseDto>> GetAllDevicesAsync(int page = 1, int pageSize = 10)
     {
-        IEnumerable<Device> devices = await _deviceRepository.GetAllDevicesAsync();
+        IEnumerable<Device> devices = await _deviceRepository.GetAllDevicesAsync(page, pageSize);
         return devices.Select(d => new DeviceResponseDto
         {
             Id = d.Id,
@@ -158,15 +158,15 @@ public class DeviceService : IDeviceService
 
     }
 
-    public async Task<IEnumerable<DeviceResponseDto>> GetDevicesByUserIdAsync(int userId)
+    public async Task<IEnumerable<DeviceResponseDto>> GetDevicesByUserIdAsync(int userId, int page = 1, int pageSize = 10)
     {
-        var devices = await _deviceRepository.GetDevicesByUserIdAsync(userId);
+        var devices = await _deviceRepository.GetDevicesByUserIdAsync(userId, page, pageSize);
         return MapToDeviceResponseDto(devices);
     }
 
-    public async Task<IEnumerable<DeviceResponseDto>> GetUnassignedDevicesAsync()
+    public async Task<IEnumerable<DeviceResponseDto>> GetUnassignedDevicesAsync(int page = 1, int pageSize = 10)
     {
-        var devices = await _deviceRepository.GetUnassignedDevicesAsync();
+        var devices = await _deviceRepository.GetUnassignedDevicesAsync(page, pageSize);
         return MapToDeviceResponseDto(devices);
     }
 
@@ -180,9 +180,9 @@ public class DeviceService : IDeviceService
 
         return await _deviceDescriptionGenerator.GenerateDescriptionAsync(device);
     }
-    public async Task<IEnumerable<DeviceResponseDto>> SearchDeviceAsync(string query)
+    public async Task<IEnumerable<DeviceResponseDto>> SearchDeviceAsync(string query, int page = 1, int pageSize = 10)
     {
-        var devices = await _deviceRepository.SearchDeviceAsync(query);
+        var devices = await _deviceRepository.SearchDeviceAsync(query, page, pageSize);
         return MapToDeviceResponseDto(devices);
     }
 

@@ -43,6 +43,11 @@ import { Device } from '../../../models';
         }
       </tbody>
     </table>
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="pageNumber === 1">Previous</button>
+      <span>Page {{ pageNumber }}</span>
+      <button (click)="nextPage()" [disabled]="devices.length < pageSize">Next</button>
+    </div>
   `,
   styleUrl: '../device-list.css'
 })
@@ -51,6 +56,8 @@ export class MyDevicesComponent implements OnInit {
   private auth = inject(AuthService);
 
   devices: Device[] = [];
+  pageNumber = 1;
+  pageSize = 10;
 
   ngOnInit() {
     this.loadDevices();
@@ -58,7 +65,7 @@ export class MyDevicesComponent implements OnInit {
 
   loadDevices() {
     const currentUser = this.auth.currentUser();
-    this.api.getMyDevices().subscribe(data => {
+    this.api.getMyDevices(this.pageNumber, this.pageSize).subscribe(data => {
       this.devices = data.filter(d => d.userId === currentUser?.id);
     });
   }
@@ -68,6 +75,20 @@ export class MyDevicesComponent implements OnInit {
       this.api.deleteDevice(id).subscribe(() => {
         this.devices = this.devices.filter(d => d.id !== id);
       });
+    }
+  }
+
+  prevPage() {
+    if (this.pageNumber > 1) {
+      this.pageNumber--;
+      this.loadDevices();
+    }
+  }
+
+  nextPage() {
+    if (this.devices.length >= this.pageSize) {
+      this.pageNumber++;
+      this.loadDevices();
     }
   }
 }

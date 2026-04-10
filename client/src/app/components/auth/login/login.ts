@@ -27,12 +27,19 @@ import { AuthService } from '../../../services/auth.service';
 
           <div class="form-group">
             <label>Email Address</label>
-            <input type="email" formControlName="email" placeholder="name@company.com" required />
+            <input type="email" formControlName="email" placeholder="name@company.com" required [class.error-input]="f['email'].invalid && f['email'].touched" />
+            <div *ngIf="f['email'].invalid && f['email'].touched" class="error-text">
+              <small *ngIf="f['email'].errors?.['required']">Email is required.</small>
+              <small *ngIf="f['email'].errors?.['email']">Please enter a valid email address.</small>
+            </div>
           </div>
 
           <div class="form-group">
             <label>Password</label>
-            <input type="password" formControlName="password" placeholder="••••••••" required />
+            <input type="password" formControlName="password" placeholder="••••••••" required [class.error-input]="f['password'].invalid && f['password'].touched" />
+            <div *ngIf="f['password'].invalid && f['password'].touched" class="error-text">
+              <small *ngIf="f['password'].errors?.['required']">Password is required.</small>
+            </div>
           </div>
 
           <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || loading">
@@ -56,6 +63,10 @@ export class LoginComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required]
   });
+
+  get f() {
+    return this.loginForm.controls;
+  }
 
   loading = false;
   errorMessage = '';

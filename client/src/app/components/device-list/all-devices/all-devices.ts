@@ -39,6 +39,11 @@ import { Device } from '../../../models';
         }
       </tbody>
     </table>
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="pageNumber === 1">Previous</button>
+      <span>Page {{ pageNumber }}</span>
+      <button (click)="nextPage()" [disabled]="devices.length < pageSize">Next</button>
+    </div>
   `,
   styleUrl: '../device-list.css'
 })
@@ -46,26 +51,50 @@ export class AllDevicesComponent implements OnInit {
   private api = inject(ApiService);
   devices: Device[] = [];
   isSearching = false;
+  currentQuery = '';
+  pageNumber = 1;
+  pageSize = 10;
 
   ngOnInit() {
     this.loadDevices();
   }
 
   loadDevices() {
-    this.api.getDevices().subscribe(data => this.devices = data);
+    this.api.getDevices(this.pageNumber, this.pageSize).subscribe(data => this.devices = data);
   }
 
-  onSearch(query: string) {
+    onSearch(query: string, resetPage = true) {
+    if (resetPage) {
+      this.pageNumber = 1;
+    }
+    this.currentQuery = query;
     if (!query.trim()) {
       this.clearSearch();
       return;
     }
     this.isSearching = true;
-    this.api.searchDevices(query).subscribe(data => this.devices = data);
+
+    this.api.searchDevices(query, this.pageNumber, this.pageSize).subscribe(data => this.devices = data);
   }
 
   clearSearch() {
+    this.currentQuery = '';
     this.isSearching = false;
+    this.pageNumber = 1;
     this.loadDevices();
+  }
+
+  prevPage() {
+    if (this.pageNumber > 1) {
+      this.pageNumber--;
+      this.isSearching ? this.onSearch(this.currentQuery, false) : this.loadDevices();
+    }
+  }
+
+  nextPage() {
+    if (this.devices.length >= this.pageSize) {
+      this.pageNumber++;
+      this.isSearching ? this.onSearch(this.currentQuery, false) : this.loadDevices();
+    }
   }
 }
