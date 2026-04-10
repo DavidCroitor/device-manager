@@ -41,8 +41,11 @@ Device Management System is a full-stack web application designed for managing d
 3. Configure your JWT settings and AI API key using the .NET Secret Manager from the `Presentation` directory:
    ```bash
    cd Presentation
-   dotnet user-secrets set "JwtSettings:Secret" "Your_Super_Secret_Key"
-   dotnet user-secrets set "AI-API-KEY" "Your_AI_API_Key"
+   dotnet user-secrets set "Jwt:Key" "Your_Super_Secret_Key"
+   dotnet user-secrets set "Jwt:Audience" "Audience"
+   dotnet user-secrets set "Jwt:Issuer" "Issuer"
+   dotnet user-secrets set "Jwt:ExpirationInMinutes" "120"
+   dotnet user-secrets set "GroqApiKey" "Your_AI_API_Key"
    cd ..
    ```
 4. Run the API:
